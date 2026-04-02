@@ -1,0 +1,24 @@
+merry_go_robotran/
+│
+├── data/
+│   └── carousel_data.py         # Paramètres du carrousel (masses, géométrie, inerties)
+│
+├── neri/
+│   ├── kinematics.py            # Phase 1 : récursion cinématique forward
+│   ├── dynamics.py              # Phase 2-3 : récursion dynamique backward + projection
+│   └── assembly.py              # Assemblage M(q) et c(q,qd) via la "last trick" du NERi
+│
+├── simulation/
+│   ├── driven_vars.py           # Variables commandées qc(t) et qd_c(t)
+│   ├── integrator.py            # Fonction yd=f(y,t) + appel solve_ivp
+│   └── main.py                  # Programme principal (point d'entrée)
+│
+├── postprocess/
+│   ├── internal_forces.py       # Calcul des efforts internes (F, moment fléchissant)
+│   ├── dimensioning.py          # Contraintes σ/ε, facteur de sécurité, section critique
+│   └── plots.py                 # Graphes de validation et résultats
+│
+├── results/                     # Fichiers .res de sortie
+│
+└── validation/
+    └── gonogo_comparison.py     # Comparaison avec la courbe Go/No-Go du MOOC
