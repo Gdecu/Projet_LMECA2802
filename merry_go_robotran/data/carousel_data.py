@@ -34,6 +34,7 @@
 
 import numpy as np
 from math import pi, cos, sin
+from merry_go_robotran.neri.body import Body
 
 
 # =============================================================================
@@ -60,9 +61,9 @@ N_sub = 4           # nombre de sous-systèmes (bras + pendule + nacelle)
 # Corps :   0       1       2      3       4-7       8-11     12-15
 body_names = [
     "base",
-    "pole",
     "pole_tilt1",   # Cardan axe I1 (commandé)
     "pole_tilt2",   # Cardan axe I2 (commandé)
+    "pole",
     "arm_1", "arm_2", "arm_3", "arm_4",
     "pendulum_1", "pendulum_2", "pendulum_3", "pendulum_4",
     "nacelle_1", "nacelle_2", "nacelle_3", "nacelle_4",
@@ -71,13 +72,13 @@ body_names = [
 # Indice parent de chaque corps
 parent = {
     "base": None,
-    "pole": "base",
-    "pole_tilt1": "pole",           # ?? --> j'aurais mis base -> pole_tilt1 -> pole_tilt2 -> pole -> bras 'i' -> pendule 'i' -> nacelle 'i'
+    "pole_tilt1": "base",
     "pole_tilt2": "pole_tilt1",
-    "arm_1": "pole_tilt2",
-    "arm_2": "pole_tilt2",
-    "arm_3": "pole_tilt2",
-    "arm_4": "pole_tilt2",
+    "pole": "pole_tilt2",
+    "arm_1": "pole",
+    "arm_2": "pole",
+    "arm_3": "pole",
+    "arm_4": "pole",
     "pendulum_1": "arm_1",
     "pendulum_2": "arm_2",
     "pendulum_3": "arm_3",
@@ -112,17 +113,17 @@ joint_type = {
 # 'u' = indépendante (intégrée par RK4)
 # 'c' = commandée (calculée par loi de commande, non intégrée)
 var_type = {
-    "pole": "u",
     "pole_tilt1": "c",
     "pole_tilt2": "c",
+    "pole": "u",        # rotating at given speed no? not driven, rotating because external torque applied
     "pendulum_1": "u",
     "pendulum_2": "u",
     "pendulum_3": "u",
     "pendulum_4": "u",
-    "nacelle_1": "c",
-    "nacelle_2": "c",
-    "nacelle_3": "c",
-    "nacelle_4": "c",
+    "nacelle_1": "u",   # no driving motions for the nacelle, just hanging there with 2DOF
+    "nacelle_2": "u",
+    "nacelle_3": "u",
+    "nacelle_4": "u",
 }
 
 
@@ -144,12 +145,12 @@ r_pole = 0.25       # [m] rayon du cylindre du pôle (diamètre 0.5 m)
 r_base_to_pole_joint = np.array([0.0, 0.0, 0.0])
 
 # Centre de masse du pôle = mi-hauteur
-r_pole_joint_to_com = np.array([0.0, 0.0, L_pole / 2.0])   # [0, 0, 2.25] m
+r_pole_joint_to_com = np.array([0.0, 0.0, 2])#  2m COM given in doc L_pole / 2.0])   # [0, 0, 2.25] m
 
 # --- Bras (identiques, orientés à 90° l'un de l'autre) ---
 # Les 4 bras partent du sommet du pôle (z = L_pole = 4.5 m)
 # Chaque bras est dans le plan horizontal ; longueur = 1 m (jusqu'à l'axe de la charnière pendule)
-L_arm = 1.0         # [m] longueur du bras (axe pôle -> charnière pendule)
+L_arm = 1.0-0.25         # [m] longueur du bras (axe pôle -> charnière pendule) - radius of the pole
 
 # Angle de chaque bras dans le plan horizontal (quand pôle vertical, repère inertiel)
 # Bras 1 : +I1 direction, Bras 2 : +I2, Bras 3 : -I1, Bras 4 : -I2
@@ -171,7 +172,7 @@ arm_angles_inertial = {
 def r_pole_com_to_arm_hinge(arm_name):
     """Vecteur CDM pôle -> charnière bras (dans repère pôle, pôle vertical)."""
     phi = arm_angles_inertial[arm_name]
-    return np.array([L_arm * cos(phi), L_arm * sin(phi), L_pole / 2.0])
+    return np.array([L_arm * cos(phi), L_arm * sin(phi), 2.5]) # 3 because pole COM at 2m
 
 # Centre de masse des bras : les bras sont intégrés dans le pôle (corps rigide).
 # Si on les sépare plus tard, le CDM du bras est à mi-longueur :
@@ -193,11 +194,12 @@ r_nacelle_cardan_to_com = np.array([0.0, 0.0, -1.0])   # [m] (Fig. 2 : 1 m)
 
 # --- Ancrage du ressort-amortisseur sur le bras ---
 # Point d'attache sur le bras : 0.5 m de l'axe du pôle, dans la direction du bras
-r_spring_arm_attach = 0.5           # [m] depuis axe pôle, dans direction bras
+'''r_spring_arm_attach = 0.5           # [m] depuis axe pôle, dans direction bras'''
+## ^^ Not working with linear springs - Fisette
 
 # Point d'attache sur le pendule : 1.5 m sous la charnière et 0.1 m vers l'intérieur
-r_spring_pendulum_attach_below  = 1.5   # [m] sous la charnière le long du pendule
-r_spring_pendulum_attach_inward = 0.1   # [m] vers le centre (inward)
+'''r_spring_pendulum_attach_below  = 1.5   # [m] sous la charnière le long du pendule
+r_spring_pendulum_attach_inward = 0.1   # [m] vers le centre (inward)'''
 
 
 # =============================================================================
@@ -252,9 +254,9 @@ damping_nacelle_cardan = 6.0        # [N·s/m] (idem pour les deux axes du Carda
 # La force est alignée entre les deux points d'attache.
 # =============================================================================
 
-k_spring    = 500.0     # [N/m]   raideur du ressort
+'''k_spring    = 500.0     # [N/m]   raideur du ressort
 L0_spring   = 10.0      # [m]     longueur à vide du ressort
-c_damper    = 700.0     # [N·s/m] coefficient d'amortissement
+c_damper    = 700.0     # [N·s/m] coefficient d'amortissement'''
 
 
 # =============================================================================
@@ -276,8 +278,11 @@ omega_pole_threshold = 0.8          # [rad/s] seuil de vitesse
 # --- Force de vent sur chaque nacelle ---
 # F = A*(1 - cos(ω*t)) dans la direction I1 (force sinusoïdale)
 F_wind_A     = 300.0                # [N]    amplitude
-omega_wind   = 6.0 * pi             # [rad/s] fréquence
+omega_wind   = 6.0 * pi             # [rad/s] fréquence # in direction I1
 
+def ext_force(t):
+    F = F_wind_A * (1 - cos(omega_wind * t)) ## in direction I1
+    return F
 
 # =============================================================================
 # 7. VARIABLES COMMANDÉES : lois de commande
@@ -331,9 +336,9 @@ def driven_tilt2_dot(t):
 theta_pendulum_init = 75.0 * pi / 180.0    # [rad]  ≈ 1.3090 rad
 
 q0 = {
-    "pole":        0.0,
     "pole_tilt1":  driven_tilt1(0.0),       # = 0 car cos(π/2) = 0 → tilt_A*(1-0)
     "pole_tilt2":  driven_tilt2(0.0),       # = 0 car cos(0) = 1   → 0
+    "pole": 0.0,
     "pendulum_1":  theta_pendulum_init,
     "pendulum_2":  theta_pendulum_init,
     "pendulum_3":  theta_pendulum_init,
@@ -376,7 +381,7 @@ def print_summary():
     print(f"    I_rev (I3)            : {I_pole_rev} kg·m²")
     print(f"    I_tra (I1,I2)         : {I_pole_tra} kg·m²")
     print(f"\n  Ressort-amortisseur")
-    print(f"    k = {k_spring} N/m,  L0 = {L0_spring} m,  c = {c_damper} N·s/m")
+    #print(f"    k = {k_spring} N/m,  L0 = {L0_spring} m,  c = {c_damper} N·s/m")
     print(f"\n  Couple moteur")
     print(f"    Phase 1 : T = {T_motor_phase1} N·m  (jusqu'à ω = {omega_pole_threshold} rad/s)")
     print(f"    Phase 2 : T = {T_motor_A}*(1+cos(...)) N·m  (0.5 s de transition)")
@@ -389,5 +394,108 @@ def print_summary():
     print("=" * 60)
 
 
-if __name__ == "__main__":
-    print_summary()
+def build_bodies() -> list[Body]:
+    """
+    Instantiate all 9 bodies of the carousel using the parameters
+    defined above in this file, and return them in topological order
+    (parent always before child).
+    """
+    bodies = []
+
+    # --- Body 1: Pole ---
+    bodies.append(Body(
+        body_id   = 1,
+        name      = 'pole',
+        parent_id = 0,
+        mass              = m_pole,
+        inertia_com_local = I_pole,
+        d_parent_to_joint_in_parent = r_base_to_pole_joint,      # [0,0,0]
+        d_joint_to_com_in_local     = r_pole_joint_to_com,       # [0,0,2]
+        joint_type           = 'revolute',
+        joint_axis_in_parent = np.eye(3), #identity matrix
+        n_dof     = 1,
+        var_types = ['u'],
+        q_indices = [0],
+    ))
+    bodies.append(Body(
+        body_id = 2,
+        name = 'pole_tilt1',
+        parent_id = 1,
+        mass = 0,
+        inertia_com_local = np.zeros((3,3)),
+        d_parent_to_joint_in_parent=np.zeros(3),
+        d_joint_to_com_in_local=np.zeros(3),
+        joint_type='revolute',
+        joint_axis_in_parent=np.eye(3),
+        n_dof = 1,
+        var_types = ['c'],
+        q_indices = [1],
+    ))
+    bodies.append(Body(
+        body_id=3,
+        name='pole_tilt2',
+        parent_id=2,
+        mass=0,
+        inertia_com_local=np.zeros((3,3)),
+        d_parent_to_joint_in_parent=np.zeros(3),
+        d_joint_to_com_in_local=np.zeros(3),
+        joint_type='revolute',
+        joint_axis_in_parent=np.eye(3),
+        n_dof=1,
+        var_types=['c'],
+        q_indices=[2],
+    ))
+
+    # --- Bodies 2–9: 4× (pendulum + nacelle) ---
+    q_idx = 3   # global q index counter, starts after pole's 3 DOFs
+
+    for k in range(N_sub):
+        pend_id   = 4 + 2*k     # 2, 4, 6, 8  all +2
+        nacelle_id = 5 + 2*k    # 3, 5, 7, 9  all +2
+        label = k + 1           # 1, 2, 3, 4
+
+        # Arm tip location in pole frame (varies per sub-system)
+        phi   = arm_angles_inertial[f'arm_{label}']
+        arm_tip_in_pole = np.array([L_arm*cos(phi), L_arm*sin(phi), L_pole])
+
+        # Hinge axis: perpendicular to both pole axis (I3) and arm direction
+        # = tangential direction in the horizontal plane
+        arm_dir   = np.array([cos(phi), sin(phi), 0.0])
+        hinge_axis = np.array([-sin(phi), cos(phi), 0.0])  # I3 × arm_dir
+
+        # Damping value differs for pendulum 2 (rusted hinge)
+        pend_name = f'pendulum_{label}'
+
+        bodies.append(Body.revolute(
+            body_id   = pend_id,
+            name      = pend_name,
+            parent_id = 3,                              # all pendulums attach to pole
+            mass         = m_pendulum,
+            inertia_diag = [I_pendulum_tra, I_pendulum_tra, I_pendulum_main],
+            d_parent_to_joint = arm_tip_in_pole,          # skipping arms as they are attached, no joint no motion
+            d_joint_to_com    = r_pendulum_hinge_to_com,  # [0,0,-1.5]
+            axis_in_parent    = hinge_axis,
+            var_type = 'u',
+            q_index  = q_idx,
+        ))
+        q_idx += 1
+
+        bodies.append(Body.cardan2(
+            body_id   = nacelle_id,
+            name      = f'nacelle_{label}',
+            parent_id = pend_id,
+            mass         = m_nacelle,
+            inertia_diag = [I_nacelle_tra, I_nacelle_tra, I_nacelle_sym],
+            d_parent_to_joint = r_pendulum_hinge_to_nacelle_joint,  # [0,0,-3]
+            d_joint_to_com    = r_nacelle_cardan_to_com,             # [0,0,-1]
+            axes_in_parent    = [hinge_axis,
+                                 arm_dir],    # axis 1 = hinge axis, axis 2 = arm direction
+            var_types = ['u', 'u'],
+            q_indices = [q_idx, q_idx+1],
+        ))
+        q_idx += 2
+
+    return bodies
+
+#if __name__ == "__main__":
+#    print_summary()

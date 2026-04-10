@@ -24,9 +24,9 @@ def skew(v: np.ndarray) -> np.ndarray:
     """Return the 3×3 skew-symmetric matrix of vector v such that
     skew(v) @ u = v × u."""
     return np.array([
-        [ 0.0,  -v[2],  v[1]],
-        [ v[2],  0.0,  -v[0]],
-        [-v[1],  v[0],  0.0 ]
+        [ 0.0,  -v[2][2],  v[1][1]],
+        [ v[2][2],  0.0,  -v[0][0]],
+        [-v[1][1],  v[0][0],  0.0 ]
     ])
 
 
@@ -162,7 +162,10 @@ class RevoluteJoint(Joint):
         The joint axis expressed in the inertial frame.
         Returns shape (3, 1).
         """
+        print(R0h)
+        print(self._axis)
         phi = R0h @ self._axis          # rotate axis to inertial frame
+        print(phi)
         return phi.reshape(3, 1)
 
 

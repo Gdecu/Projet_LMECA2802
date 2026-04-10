@@ -1,24 +1,30 @@
 merry_go_robotran/
 │
 ├── data/
-│   └── carousel_data.py         # Paramètres du carrousel (masses, géométrie, inerties)
+│   ├── params.py            # Physical constants: masses, geometry, inertia, spring
+│   ├── topology.py          # parent[], joint_type[], var_type[] — tree definition
+│   └── initial_cond.py      # q0, qd0, t_end
 │
 ├── neri/
-│   ├── kinematics.py            # Phase 1 : récursion cinématique forward
-│   ├── dynamics.py              # Phase 2-3 : récursion dynamique backward + projection
-│   └── assembly.py              # Assemblage M(q) et c(q,qd) via la "last trick" du NERi
+│   ├── body.py              # Body dataclass (m, I, d_z_ii, etc.)
+│   ├── joint.py             # Joint classes: R, C2, Fixed — provides φ(q), R(q)
+│   ├── state.py             # MBState dataclass: ω, α, β, R0i, F, L per body
+│   ├── forward.py           # Forward pass: fills state.ω, state.α for all bodies
+│   ├── backward.py          # Backward pass: fills state.F, state.L; projects Q
+│   └── assembler.py         # Last trick: builds M(q) and c(q,qd)
 │
 ├── simulation/
-│   ├── driven_vars.py           # Variables commandées qc(t) et qd_c(t)
-│   ├── integrator.py            # Fonction yd=f(y,t) + appel solve_ivp
-│   └── main.py                  # Programme principal (point d'entrée)
+│   ├── driven_vars.py       # qc(t), qdc(t), qddc(t) — control laws
+│   ├── forces.py            # Motor torque, wind force, spring-damper — returns Q, Fext
+│   ├── integrator.py        # yd=f(y,t) function + solve_ivp call
+│   └── main.py              # Entry point: load → init → integrate → save → plot
 │
 ├── postprocess/
-│   ├── internal_forces.py       # Calcul des efforts internes (F, moment fléchissant)
-│   ├── dimensioning.py          # Contraintes σ/ε, facteur de sécurité, section critique
-│   └── plots.py                 # Graphes de validation et résultats
+│   ├── internal_forces.py   # Extract F^i, L^i at critical sections from saved states
+│   ├── dimensioning.py      # σ, ε, safety factor, critical section search
+│   └── plots.py             # All matplotlib figures
 │
-├── results/                     # Fichiers .res de sortie
+├── results/                 # Saved .npz output arrays
 │
 └── validation/
-    └── gonogo_comparison.py     # Comparaison avec la courbe Go/No-Go du MOOC
+    └── gonogo.py            # Reproduce Go/No-Go curve, compare with MOOC reference
