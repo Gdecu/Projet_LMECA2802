@@ -230,8 +230,8 @@
         <graphics>
           <x2D>
             <position>
-              <x>1088.0</x>
-              <y>108.0</y>
+              <x>1198.0</x>
+              <y>227.0</y>
             </position>
           </x2D>
           <x3D />
@@ -247,8 +247,8 @@
         <graphics>
           <x2D>
             <position>
-              <x>786.0</x>
-              <y>75.0</y>
+              <x>719.0</x>
+              <y>144.0</y>
             </position>
           </x2D>
           <x3D />
@@ -266,74 +266,6 @@
             <position>
               <x>602.0</x>
               <y>270.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Pole_ressort_1</pointname>
-        <coordinates>
-          <x>0.5</x>
-          <y>0.0</y>
-          <z>4.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>1088.0</x>
-              <y>422.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Pole_ressort_2</pointname>
-        <coordinates>
-          <x>0.0</x>
-          <y>0.5</y>
-          <z>4.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>1123.0</x>
-              <y>220.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Pole_ressort_3</pointname>
-        <coordinates>
-          <x>-0.5</x>
-          <y>0.0</y>
-          <z>4.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>797.0</x>
-              <y>179.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Point_0</pointname>
-        <coordinates>
-          <x>0.0</x>
-          <y>-0.5</y>
-          <z>4.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>781.0</x>
-              <y>395.0</y>
             </position>
           </x2D>
           <x3D />
@@ -376,7 +308,7 @@
         <pointname>Bras_1</pointname>
       </parent>
       <joint>
-        <jointname>Hinge_Pend_1</jointname>
+        <jointname>R2_pendulum_1</jointname>
         <type>R2</type>
         <nature>independent</nature>
         <initialvalue>
@@ -420,23 +352,6 @@
             <position>
               <x>1419.0</x>
               <y>649.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Nacelle_ressort_1</pointname>
-        <coordinates>
-          <x>-0.1</x>
-          <y>0.0</y>
-          <z>-1.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>1297.0</x>
-              <y>479.0</y>
             </position>
           </x2D>
           <x3D />
@@ -610,17 +525,14 @@
         <pointname>Bras_2</pointname>
       </parent>
       <joint>
-        <jointname>Hinge_Pend_</jointname>
+        <jointname>R2_pendulum_2</jointname>
         <type>R2</type>
         <nature>independent</nature>
-        <initialvalue>
-          <q>1.309</q>
-        </initialvalue>
         <graphics>
           <x2D>
             <position>
-              <x>1686.0</x>
-              <y>132.0</y>
+              <x>1712.0</x>
+              <y>197.0</y>
             </position>
           </x2D>
           <x3D>
@@ -652,25 +564,8 @@
         <graphics>
           <x2D>
             <position>
-              <x>1686.0</x>
-              <y>376.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Point_0</pointname>
-        <coordinates>
-          <x>0.0</x>
-          <y>0.0</y>
-          <z>0.0</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>1479.0</x>
-              <y>192.0</y>
+              <x>1712.0</x>
+              <y>441.0</y>
             </position>
           </x2D>
           <x3D />
@@ -844,12 +739,9 @@
         <pointname>Bras_3</pointname>
       </parent>
       <joint>
-        <jointname>Hinge_Pend_3</jointname>
+        <jointname>R2_pendulum_3</jointname>
         <type>R2</type>
         <nature>independent</nature>
-        <initialvalue>
-          <q>1.309</q>
-        </initialvalue>
         <graphics>
           <x2D>
             <position>
@@ -888,23 +780,6 @@
             <position>
               <x>288.0</x>
               <y>436.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Nacelle_ressort_3</pointname>
-        <coordinates>
-          <x>-0.1</x>
-          <y>0.0</y>
-          <z>-1.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>479.0</x>
-              <y>169.0</y>
             </position>
           </x2D>
           <x3D />
@@ -1078,12 +953,9 @@
         <pointname>Bras_4</pointname>
       </parent>
       <joint>
-        <jointname>Hinge_Pend_4</jointname>
+        <jointname>R2_pendulum_4</jointname>
         <type>R2</type>
         <nature>independent</nature>
-        <initialvalue>
-          <q>1.309</q>
-        </initialvalue>
         <graphics>
           <x2D>
             <position>
@@ -1122,23 +994,6 @@
             <position>
               <x>526.0</x>
               <y>691.0</y>
-            </position>
-          </x2D>
-          <x3D />
-        </graphics>
-      </point>
-      <point>
-        <pointname>Nacelle_ressort_4</pointname>
-        <coordinates>
-          <x>-0.1</x>
-          <y>0.0</y>
-          <z>-1.5</z>
-        </coordinates>
-        <graphics>
-          <x2D>
-            <position>
-              <x>649.0</x>
-              <y>426.0</y>
             </position>
           </x2D>
           <x3D />
