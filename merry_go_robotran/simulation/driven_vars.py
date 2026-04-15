@@ -102,10 +102,10 @@ DRIVEN_LAW_REGISTRY: dict = {
     "pole_tilt2":  [_law_tilt2],
 
     # Nacelle Cardan joints — 2 DOF each, both locked to zero
-    "nacelle_1":   [_law_locked, _law_locked],
-    "nacelle_2":   [_law_locked, _law_locked],
-    "nacelle_3":   [_law_locked, _law_locked],
-    "nacelle_4":   [_law_locked, _law_locked],
+    #"nacelle_1":   [_law_locked, _law_locked],
+    ##"nacelle_2":   [_law_locked, _law_locked],
+    #"nacelle_3":   [_law_locked, _law_locked],
+    #"nacelle_4":   [_law_locked, _law_locked],
 }
 
 

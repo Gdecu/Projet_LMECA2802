@@ -28,16 +28,16 @@ import numpy as np
 from math import cos, pi
 from scipy.integrate import solve_ivp
 
-from neri.state    import MBState
-from neri.forward  import forward_pass
-from neri.backward import backward_pass
-from neri.assembly import (assemble_Mc,
+from merry_go_robotran.neri.state    import MBState
+from merry_go_robotran.neri.forward  import forward_pass
+from merry_go_robotran.neri.backward import backward_pass
+from merry_go_robotran.neri.assembly import (assemble_Mc,
                             solve_independent_accelerations,
                             get_dof_indices)
-from simulation.driven_vars import (evaluate_driven,
+from merry_go_robotran.simulation.driven_vars import (evaluate_driven,
                                      inject_driven_into_state,
                                      get_qddc_vector)
-import data.carousel_data as cd
+import merry_go_robotran.data.carousel_data as cd
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -391,7 +391,7 @@ def run_simulation(bodies: list,
 
     # Initial condition for independent DOFs only
     y0 = np.concatenate([q0_full[idx_u], qd0_full[idx_u]])
-
+    print(f_ode(10.0, y0))
     print(f"[integrator] Starting RK45 integration — t_end={t_end}s, "
           f"nu={nu}, nc={len(idx_c)}")
 

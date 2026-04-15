@@ -150,7 +150,8 @@ r_pole_joint_to_com = np.array([0.0, 0.0, 2])#  2m COM given in doc L_pole / 2.0
 # --- Bras (identiques, orientés à 90° l'un de l'autre) ---
 # Les 4 bras partent du sommet du pôle (z = L_pole = 4.5 m)
 # Chaque bras est dans le plan horizontal ; longueur = 1 m (jusqu'à l'axe de la charnière pendule)
-L_arm = 1.0-0.25         # [m] longueur du bras (axe pôle -> charnière pendule) - radius of the pole
+L_arm = 1.0-0.25         # [m] longueur du bras (axe pôle -> charnière pendule)
+# with this arm starts outside of pole
 
 # Angle de chaque bras dans le plan horizontal (quand pôle vertical, repère inertiel)
 # Bras 1 : +I1 direction, Bras 2 : +I2, Bras 3 : -I1, Bras 4 : -I2
@@ -172,7 +173,8 @@ arm_angles_inertial = {
 def r_pole_com_to_arm_hinge(arm_name):
     """Vecteur CDM pôle -> charnière bras (dans repère pôle, pôle vertical)."""
     phi = arm_angles_inertial[arm_name]
-    return np.array([L_arm * cos(phi), L_arm * sin(phi), 2.5]) # 3 because pole COM at 2m
+    return np.array([L_arm * cos(phi), L_arm * sin(phi), 2.5]) # because pole COM at 2m, so not 4.5/2
+## Function above is never used??
 
 # Centre de masse des bras : les bras sont intégrés dans le pôle (corps rigide).
 # Si on les sépare plus tard, le CDM du bras est à mi-longueur :
@@ -333,13 +335,13 @@ def driven_tilt2_dot(t):
 #   - Nacelles  : alignées sur le pendule (Cardan à 0)
 # =============================================================================
 
-theta_pendulum_init = 75.0 * pi / 180.0    # [rad]  ≈ 1.3090 rad
+theta_pendulum_init = -75.0 * pi / 180.0    # [rad]  ≈ 1.3090 rad
 
 q0 = {
     "pole_tilt1":  driven_tilt1(0.0),       # = 0 car cos(π/2) = 0 → tilt_A*(1-0)
     "pole_tilt2":  driven_tilt2(0.0),       # = 0 car cos(0) = 1   → 0
     "pole": 0.0,
-    "pendulum_1":  theta_pendulum_init,
+    "pendulum_1":  theta_pendulum_init, #would be negative in my notes
     "pendulum_2":  theta_pendulum_init,
     "pendulum_3":  theta_pendulum_init,
     "pendulum_4":  theta_pendulum_init,
@@ -356,7 +358,7 @@ qd0 = {k: 0.0 for k in q0}                # toutes les vitesses initiales nulles
 #   - 37.5 cm vers le centre du pôle (radially inward)
 # =============================================================================
 
-r_passenger_from_nacelle_cardan = np.array([-0.375, 0.0, -0.50])   # [m] dans repère nacelle
+#r_passenger_from_nacelle_cardan = np.array([-0.375, 0.0, -0.50])   # [m] dans repère nacelle
 
 
 # =============================================================================
@@ -407,12 +409,12 @@ def build_bodies() -> list[Body]:
         body_id   = 1,
         name      = 'pole',
         parent_id = 0,
-        mass              = m_pole,
-        inertia_com_local = I_pole,
-        d_parent_to_joint_in_parent = r_base_to_pole_joint,      # [0,0,0]
-        d_joint_to_com_in_local     = r_pole_joint_to_com,       # [0,0,2]
+        mass              = 0,
+        inertia_com_local = np.zeros((3,3)),
+        d_parent_to_joint_in_parent = np.zeros(3),      # [0,0,0]
+        d_joint_to_com_in_local     = np.zeros(3),   #r_pole_joint_to_com not this one because no mass # [0,0,2]
         joint_type           = 'revolute',
-        joint_axis_in_parent = np.eye(3), #identity matrix
+        joint_axis_in_parent = np.array([0, 0, 1]),
         n_dof     = 1,
         var_types = ['u'],
         q_indices = [0],
@@ -426,7 +428,7 @@ def build_bodies() -> list[Body]:
         d_parent_to_joint_in_parent=np.zeros(3),
         d_joint_to_com_in_local=np.zeros(3),
         joint_type='revolute',
-        joint_axis_in_parent=np.eye(3),
+        joint_axis_in_parent=np.array([1, 0, 0]),
         n_dof = 1,
         var_types = ['c'],
         q_indices = [1],
@@ -435,12 +437,12 @@ def build_bodies() -> list[Body]:
         body_id=3,
         name='pole_tilt2',
         parent_id=2,
-        mass=0,
-        inertia_com_local=np.zeros((3,3)),
-        d_parent_to_joint_in_parent=np.zeros(3),
-        d_joint_to_com_in_local=np.zeros(3),
+        mass=m_pole,
+        inertia_com_local=I_pole,
+        d_parent_to_joint_in_parent=r_base_to_pole_joint,
+        d_joint_to_com_in_local=r_pole_joint_to_com,
         joint_type='revolute',
-        joint_axis_in_parent=np.eye(3),
+        joint_axis_in_parent=np.array([0, 1, 0]),
         n_dof=1,
         var_types=['c'],
         q_indices=[2],
@@ -465,7 +467,7 @@ def build_bodies() -> list[Body]:
 
         # Damping value differs for pendulum 2 (rusted hinge)
         pend_name = f'pendulum_{label}'
-
+        #no arm (included in pole), straight to pendulum)
         bodies.append(Body.revolute(
             body_id   = pend_id,
             name      = pend_name,

@@ -105,7 +105,7 @@ def main():
         result = run_simulation(
             bodies, joints,
             q0_full, qd0_full,
-            t_end=t_end,
+            t_end=5,#t_end, # shorter time for faster debugging
             rtol=RTOL,
             atol=ATOL,
         )

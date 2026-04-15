@@ -61,11 +61,13 @@ def forward_pass(bodies: list,
     state.omega[0]  = np.zeros(3)
     state.omegad[0] = np.zeros(3)
     state.beta[0]   = np.zeros((3, 3))
-    state.alpha[0]  = -g
+    state.alpha[0]  = g # vector already accounts for negation
 
     for body, joint in zip(bodies, joints):
         i = body.body_id
         h = body.parent_id
+        print("=" * 20)
+        print(f"Working on body ({i})")
 
         q_i   = state.q[body.q_indices]
         qd_i  = state.qd[body.q_indices]
@@ -73,6 +75,7 @@ def forward_pass(bodies: list,
 
         # --- A: rotation matrix R^{0i} = R^{0h} · R^{hi}(q) ---
         state.R[i] = state.R[h] @ joint.rotation_matrix(q_i)
+        print(f"Rotation matrix: {state.R[i]}")
 
         # --- B: geometry vectors in inertial frame ---
         state.d_hi[i] = state.R[h] @ body.d_parent_to_joint_in_parent
@@ -84,13 +87,17 @@ def forward_pass(bodies: list,
 
         if joint.n_dof == 1:
             state.phi[i] = phi_i[:, 0]
+            #print(f"Body {body.name} (id={i}): joint.n_dof={joint.n_dof}, "
+            #      f"phi_i type={type(phi_i)}, phi_i shape={getattr(phi_i, 'shape', 'N/A')}, "
+            #      f"psi_i type={type(psi_i)}, psi_i shape={getattr(psi_i, 'shape', 'N/A')}")
+            #print(psi_i)
             state.psi[i] = psi_i[:, 0]
 
         # --- D: angular velocity  ω^i = ω^h + Σ_k φ_k q̇_k  (3.58) ---
         state.omega[i] = state.omega[h].copy()
         for k in range(joint.n_dof):
             state.omega[i] += phi_i[:, k] * qd_i[k]
-
+        print(f"Omega: {state.omega[i]}")
         # --- E: angular acceleration  (3.59) ---
         # ω̇^i = ω̇^h + ω̃^i·φ_k·q̇_k  (Coriolis on axis)
         #              + φ_k·q̈_k       (direct)
@@ -99,14 +106,28 @@ def forward_pass(bodies: list,
         Om_i = skew(state.omega[i])
         state.omegad[i] = state.omegad[h].copy()
         for k in range(joint.n_dof):
+            #x = body.body_id
+            #if x <= 3:
+                #print(f"omegad is {state.omega[x]}")
+                #print(f"{x}) Part 1: {Om_i @ phi_i[:, k] * qd_i[k]}")
+            print(f"{i}) Part 2: {phi_i[:, k] * qdd_i[k]}")
+            print(f"{i}) phi_i: {phi_i[:, k]}")
+            print(f"{i}) qdd: {qdd_i[k]}")
+            #print(f"{x}) Om_i: {Om_i}")
+                #print(f"{x}) Phi_i: {phi_i[:, k]}")
+                #print(f"{x}) qd_i[k]: {qd_i[k]}")
+
             state.omegad[i] += Om_i @ phi_i[:, k] * qd_i[k]   # axis Coriolis
             state.omegad[i] += phi_i[:, k] * qdd_i[k]          # direct
+        print(f"Omegad: {state.omegad[i]}")
 
         # --- F: β^i = skew(ω̇^i) + skew(ω^i)²  (3.60) ---
         state.beta[i] = skew(state.omegad[i]) + Om_i @ Om_i
+        print(f"Beta: {state.beta[i]}")
 
         # --- G: α^i = acceleration of joint origin O^i minus g ---
         # α^i = α^h + β^h · d^{hi}
         # This is a PURE TRANSPORT: no Coriolis or q̈ terms.
         # Coriolis/centripetal effects enter through β^i in W (backward).
         state.alpha[i] = state.alpha[h] + state.beta[h] @ state.d_hi[i]
+        print(f"Alpha: {state.alpha[i]}")
