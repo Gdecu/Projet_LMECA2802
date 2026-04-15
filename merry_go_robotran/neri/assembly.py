@@ -126,7 +126,7 @@ def assemble_Mc(bodies:  list,
         tmp_k.qdd[k] = 1.0                       # unit impulse on DOF k
 
         # No external forces for mass column sweep
-        forward_pass(bodies, joints, tmp_k, g)
+        forward_pass(bodies, joints, tmp_k, np.zeros(3))
         backward_pass(bodies, joints, tmp_k,
                       F_ext=np.zeros((n_bodies, 3)),
                       L_ext=np.zeros((n_bodies, 3)))

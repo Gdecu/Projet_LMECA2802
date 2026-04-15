@@ -34,6 +34,11 @@ from postprocess.internal_forces import (scan_all_sections,
 from postprocess.dimensioning    import size_section, print_dimensioning_report
 from postprocess.plots           import generate_all_plots
 from postprocess.gonogo_comparison import compute_passenger_acceleration
+from merry_go_robotran.postprocess.plots import (
+    plot_pole_omega,
+    plot_pendulum_positions,
+    plot_all_nacelle_angles,
+)
 
 # ═══════════════════════════════════════════════════════════════════════════ #
 #  Configuration                                                              #
@@ -94,66 +99,19 @@ def main():
     print(f"[main] System: {len(bodies)} bodies, {n_dof} DOFs "
           f"({len(idx_u)} independent, {len(idx_c)} driven)")
 
-    # ── Design iteration loop ───────────────────────────────────────── #
-    for iteration in range(1, CONVERGENCE_ITER + 1):
-        print(f"\n[main] ── Design iteration {iteration}/{CONVERGENCE_ITER} ──")
-
-        # ── Step 2: Initial conditions ──────────────────────────────── #
-        q0_full, qd0_full = _assemble_initial_conditions(bodies)
-
-        # ── Step 3: Integrate ODE ───────────────────────────────────── #
-        result = run_simulation(
-            bodies, joints,
-            q0_full, qd0_full,
-            t_end=5,#t_end, # shorter time for faster debugging
-            rtol=RTOL,
-            atol=ATOL,
-        )
-
-        # ── Step 4: Internal forces scan ────────────────────────────── #
-        print("[main] Scanning internal forces along pendulum_1...")
-        scan = scan_all_sections(N_SECTIONS, result, bodies, joints)
-
-        s_crit, idx_t_crit, Mb_max, idx_s_crit, _ = find_critical_section(scan)
-        t_crit = result['t'][idx_t_crit]
-
-        # Axial force at critical section and time
-        N_max = np.linalg.norm(scan['F_history'][idx_t_crit, idx_s_crit])
-
-        print(f"[main] Critical section: s* = {s_crit*1000:.1f} mm, "
-              f"t* = {t_crit:.2f} s, Mb_max = {Mb_max:.1f} N·m")
-
-        # ── Step 5: Dimensioning ─────────────────────────────────────── #
-        print("[main] Sizing pendulum cross-section (SF = 10)...")
-        r_o_min, dim_results = size_section(Mb_max, N_max)
-        print_dimensioning_report(dim_results, s_crit)
-
-        # ── Convergence check ────────────────────────────────────────── #
-        # If this is not the last iteration, update the pendulum mass/inertia
-        # in the body list to reflect the newly sized section, then re-run.
-        if iteration < CONVERGENCE_ITER:
-            _update_pendulum_section(bodies, dim_results)
-            joints = make_all_joints(bodies)   # rebuild joints (unchanged but safe)
-            print(f"[main] Updated pendulum section — re-running simulation...")
-        else:
-            print("[main] Convergence loop complete.")
-
-    # ── Step 6: Go/No-Go validation ─────────────────────────────────── #
-    print("\n[main] Computing passenger acceleration for Go/No-Go check...")
-    a_pass = compute_passenger_acceleration(result)
-    a_max  = a_pass.max()
-    print(f"[main] Max passenger acceleration = {a_max:.2f} m/s²  "
-          f"({a_max/9.81:.2f} g)")
-
-    # ── Step 7: Generate plots ───────────────────────────────────────── #
-    print("\n[main] Generating plots...")
-    generate_all_plots(
-        result,
-        scan=scan,
-        s_crit=s_crit,
-        idx_s_crit=idx_s_crit,
-        reference_csv=GONOGO_CSV,
+    # ── Step 2: Initial conditions ──────────────────────────────── #
+    q0_full, qd0_full = _assemble_initial_conditions(bodies)
+    # ── Step 3: Integrate ODE ───────────────────────────────────── #
+    result = run_simulation(
+        bodies, joints,
+        q0_full, qd0_full,
+        t_end=30,  # t_end, # shorter time for faster debugging
+        rtol=RTOL,
+        atol=ATOL,
     )
+    plot_pole_omega(result)
+    plot_pendulum_positions(result)
+    plot_all_nacelle_angles(result)  # or plot_nacelle_angles(result, nacelle_id=1) for a single one
 
     print("\n[main] Simulation complete. Results saved to results/")
 

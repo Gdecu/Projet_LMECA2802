@@ -31,7 +31,7 @@ def skew(v: np.ndarray) -> np.ndarray:
 
 
 def rodrigues(axis: np.ndarray, angle: float) -> np.ndarray:
-    """
+    """## angle is q
     Rotation matrix for a rotation of `angle` [rad] about unit `axis`,
     using Rodrigues' formula:  R = I + sin(θ)ñ + (1-cos(θ))ñ²
     """

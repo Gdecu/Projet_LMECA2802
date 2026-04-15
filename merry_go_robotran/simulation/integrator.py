@@ -65,13 +65,8 @@ def _motor_torque(t: float, omega_pole: float, t0_motor: float) -> float:
     if t0_motor < 0:
         # Phase 1: motor at full torque until threshold is crossed
         return cd.T_motor_phase1
-    elif t < t0_motor + 0.5:
-        # Phase 2: smooth shut-down ramp over 0.5 s
-        phi_motor = -2.0 * pi * t0_motor
-        return cd.T_motor_A * (1.0 + cos(cd.omega_ctrl_motor * t + phi_motor))
     else:
-        # Phase 3: motor off
-        return 0.0
+        return cd.motor_torque(t, t0_motor)
 
 
 def _wind_force(t: float, n_bodies: int, body_name_to_id: dict) -> np.ndarray:
@@ -125,89 +120,6 @@ def _damping_torques(bodies: list, state: MBState,
             Q_damp[q_idx] -= cd.damping_nacelle_cardan * state.qd[q_idx]
 
     return Q_damp
-
-
-def _spring_damper_forces(bodies: list, state: MBState,
-                           body_name_to_id: dict) -> tuple:
-    """
-    Spring-damper force between each arm attachment point and the
-    corresponding pendulum attachment point (4 elements).
-
-    Attachment geometry (from carousel_data.py):
-      - Arm side:     0.5 m from pole axis along arm direction
-      - Pendulum side: 1.5 m below hinge, 0.1 m inward
-
-    The force is aligned with the connector vector; it contributes to
-    both F_ext (applied to pendulum CoM via virtual work) and, by
-    reaction, to the arm/pole body.
-
-    Returns
-    -------
-    F_ext  : (n_bodies, 3) spring-damper contributions to external forces
-    L_ext  : (n_bodies, 3) spring-damper contributions to external torques
-    """
-    n = state.n_bodies
-    F_ext = np.zeros((n, 3))
-    L_ext = np.zeros((n, 3))
-
-    arm_names     = ["arm_1",     "arm_2",     "arm_3",     "arm_4"]
-    pendulum_names= ["pendulum_1","pendulum_2","pendulum_3","pendulum_4"]
-
-    for arm_name, pend_name in zip(arm_names, pendulum_names):
-        arm_bid  = body_name_to_id.get(arm_name)
-        pend_bid = body_name_to_id.get(pend_name)
-        if arm_bid is None or pend_bid is None:
-            continue
-
-        # Attachment point on arm in inertial frame
-        # p_arm = O^arm + R^arm * [r_attach, 0, 0]
-        p_arm_attach_local = np.array([cd.r_spring_arm_attach, 0.0, 0.0])
-        p_arm = (state.alpha[arm_bid]           # reuse joint origin from forward pass?
-                 # NOTE: we reconstruct from geometry for correctness
-                 )
-        # Reconstruct arm joint origin position in inertial frame
-        # p_O^arm = p_O^pole + R^pole * d_arm_in_pole
-        # For a clean computation we use the d_hi chain:
-        # p_O^i = Σ_{k=0}^{i} d_hi[k]  (cumulative sum of joint vectors)
-        # This is approximate for general trees; we use R[i] @ local_offset.
-        p_O_arm   = _joint_origin_position(arm_bid,  bodies, state)
-        p_O_pend  = _joint_origin_position(pend_bid, bodies, state)
-
-        # Arm attachment in inertial frame
-        p_A = p_O_arm + state.R[arm_bid] @ p_arm_attach_local
-
-        # Pendulum attachment: 1.5 m below hinge, 0.1 m inward (local z-down, x-inward)
-        p_pend_attach_local = np.array([-cd.r_spring_pendulum_attach_inward,
-                                         0.0,
-                                        -cd.r_spring_pendulum_attach_below])
-        p_B = p_O_pend + state.R[pend_bid] @ p_pend_attach_local
-
-        # Connector vector and length
-        d_vec    = p_B - p_A                    # from arm attach to pendulum attach
-        dist     = np.linalg.norm(d_vec)
-        if dist < 1e-9:
-            continue
-        unit_vec = d_vec / dist
-
-        # Relative velocity along connector (for damping)
-        # Approximate: use CoM velocities — good enough for generalised forces
-        # v_A ≈ 0 (arm is fixed to pole, slow); computed via ω × r
-        v_B_approx = np.cross(state.omega[pend_bid],
-                               p_B - (p_O_pend + state.d_ii[pend_bid]))
-        v_rel = np.dot(v_B_approx, unit_vec)   # scalar relative velocity
-
-        # Spring-damper force magnitude (F > 0 = tension)
-        F_mag = cd.k_spring * (dist - cd.L0_spring) + cd.c_damper * v_rel
-
-        # Force vector on pendulum (along connector, toward arm)
-        F_on_pend = -F_mag * unit_vec
-
-        # Apply as external force at pendulum CoM (via lever arm torque)
-        r_com_from_B = state.d_ii[pend_bid] - (p_B - p_O_pend)
-        F_ext[pend_bid] += F_on_pend
-        L_ext[pend_bid] += np.cross(r_com_from_B, F_on_pend)
-
-    return F_ext, L_ext
 
 
 def _joint_origin_position(body_id: int, bodies: list, state: MBState) -> np.ndarray:
@@ -292,7 +204,7 @@ def make_ode(bodies: list, joints: list, state: MBState) -> callable:
         state.set_q(np.zeros(state.n_dof), np.zeros(state.n_dof), t)
         state.q[idx_u]  = q_u
         state.qd[idx_u] = qd_u
-        inject_driven_into_state(state, driven_vals)   # writes qc, qdc, qddc
+        #inject_driven_into_state(state, driven_vals)   # writes qc, qdc, qddc
 
         # ── 4. Check motor threshold for first time ───────────────────── #
         pole_body    = next(b for b in bodies if b.name == "pole")
@@ -310,11 +222,6 @@ def make_ode(bodies: list, joints: list, state: MBState) -> callable:
         F_ext, L_ext = _wind_force(t, state.n_bodies, body_name_to_id), \
                        np.zeros((state.n_bodies, 3))
 
-        # Spring-damper between arms and pendulums
-        F_sd, L_sd = _spring_damper_forces(bodies, state, body_name_to_id)
-        F_ext += F_sd
-        L_ext += L_sd
-
         # Motor torque on pole (projected onto I3 = pole spin axis)
         T_motor     = _motor_torque(t, omega_pole, ctx["t0_motor"])
         Q_ext       = np.zeros(state.n_dof)
@@ -328,7 +235,6 @@ def make_ode(bodies: list, joints: list, state: MBState) -> callable:
 
         # ── 7. Solve for independent accelerations ───────────────────── #
         qdd_c = get_qddc_vector(bodies, t, state.n_dof)   # prescribed qddc
-
         qdd_u = solve_independent_accelerations(
             M, c_vec, idx_u, idx_c, qdd_c[idx_c], Q_ext
         )
@@ -351,8 +257,8 @@ def run_simulation(bodies: list,
                    q0_full: np.ndarray,
                    qd0_full: np.ndarray,
                    t_end:    float = 30.0,
-                   rtol:     float = 1e-6,
-                   atol:     float = 1e-9
+                   rtol:     float = 1e-4, #e-6
+                   atol:     float = 1e-6  #e-9
                    ) -> dict:
     """
     Integrate the multibody system from t=0 to t=t_end.
@@ -391,10 +297,9 @@ def run_simulation(bodies: list,
 
     # Initial condition for independent DOFs only
     y0 = np.concatenate([q0_full[idx_u], qd0_full[idx_u]])
-    print(f_ode(10.0, y0))
+    #print(f_ode(10.0, y0))
     print(f"[integrator] Starting RK45 integration — t_end={t_end}s, "
           f"nu={nu}, nc={len(idx_c)}")
-
     # Integrate with RK45 (dense output for post-processing)
     sol = solve_ivp(f_ode,
                     t_span=(0.0, t_end),

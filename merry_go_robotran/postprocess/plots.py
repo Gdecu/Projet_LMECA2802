@@ -29,6 +29,155 @@ RESULTS_DIR = os.path.join(os.path.dirname(__file__), "..", "results")
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
+### New plots
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot A — Pole angular velocity (ω_pole about I3)                          #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+def plot_pole_omega(result: dict) -> plt.Figure:
+    """
+    Angular velocity of the main pole about I3 vs. time [rad/s].
+    Highlights the motor shut-down threshold with a dashed line.
+    """
+    t       = result['t']
+    bodies  = result['bodies']
+    q_idx   = _find_q_index(bodies, 'pole', dof=0)   # pole spin = DOF 0
+
+    omega_pole = result['qd'][:, q_idx]              # [rad/s]
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+    fig.suptitle("Main Pole — Angular Velocity about I₃", fontweight='bold')
+
+    ax.plot(t, omega_pole, color='steelblue', linewidth=1.8, label='ω_pole')
+    ax.axhline(cd.omega_pole_threshold, ls='--', color='crimson', linewidth=1.2,
+               label=f'Motor threshold  ({cd.omega_pole_threshold} rad/s)')
+
+    ax.set_xlabel("Time  [s]")
+    ax.set_ylabel("ω_pole  [rad/s]")
+    ax.legend()
+    ax.grid(True, alpha=0.35)
+    fig.tight_layout()
+
+    _save(fig, "pole_omega.pdf")
+    return fig
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot B — All pendulum angular positions                                    #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+# Colour palette: one distinct colour per sub-system
+_PEND_COLORS  = ['steelblue', 'crimson', 'seagreen', 'darkorange']
+_PEND_LABELS  = ['Pendulum 1', 'Pendulum 2 (rusted)', 'Pendulum 3', 'Pendulum 4']
+
+def plot_pendulum_positions(result: dict) -> plt.Figure:
+    """
+    Angular position of all 4 pendulum hinges vs. time [deg].
+    Pendulum 2 (rusted hinge, high damping) is rendered with a dashed line
+    to make its distinct behaviour immediately apparent.
+    """
+    t      = result['t']
+    bodies = result['bodies']
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    fig.suptitle("Pendulums — Angular Position", fontweight='bold')
+
+    for k in range(1, 5):
+        q_idx = _find_q_index(bodies, f'pendulum_{k}', dof=0)
+        theta = np.degrees(result['q'][:, q_idx])   # convert rad → deg
+
+        linestyle = '--' if k == 2 else '-'          # dashed for rusted hinge
+        ax.plot(t, theta,
+                color=_PEND_COLORS[k - 1],
+                linestyle=linestyle,
+                linewidth=1.6,
+                label=_PEND_LABELS[k - 1])
+
+    ax.set_xlabel("Time  [s]")
+    ax.set_ylabel("θ_pendulum  [deg]")
+    ax.legend()
+    ax.grid(True, alpha=0.35)
+    fig.tight_layout()
+
+    _save(fig, "pendulum_positions.pdf")
+    return fig
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot C — Nacelle Cardan angles (both DOFs on one plot, per nacelle)       #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+def plot_nacelle_angles(result: dict, nacelle_id: int = 1) -> plt.Figure:
+    """
+    Both Cardan angles (DOF 0 and DOF 1) of a single nacelle vs. time [deg].
+    Call once per nacelle, or loop over nacelle_id ∈ {1,2,3,4}.
+
+    Parameters
+    ----------
+    nacelle_id : int
+        Sub-system index (1–4).
+    """
+    t      = result['t']
+    bodies = result['bodies']
+
+    # Retrieve both q-indices for the 2-DOF Cardan joint
+    nacelle_body = next(b for b in bodies if b.name == f'nacelle_{nacelle_id}')
+    q_idx_0, q_idx_1 = nacelle_body.q_indices[0], nacelle_body.q_indices[1]
+
+    theta_0 = np.degrees(result['q'][:, q_idx_0])   # 1st Cardan angle [deg]
+    theta_1 = np.degrees(result['q'][:, q_idx_1])   # 2nd Cardan angle [deg]
+
+    fig, ax = plt.subplots(figsize=(10, 4))
+    fig.suptitle(f"Nacelle {nacelle_id} — Cardan Angles", fontweight='bold')
+
+    ax.plot(t, theta_0, color='steelblue', linewidth=1.6, label='Cardan angle 1 (⊥ arm & pole axes)')
+    ax.plot(t, theta_1, color='darkorange', linewidth=1.6, linestyle='--',
+            label='Cardan angle 2 (arm–pendulum plane)')
+
+    ax.set_xlabel("Time  [s]")
+    ax.set_ylabel("θ_nacelle  [deg]")
+    ax.legend()
+    ax.grid(True, alpha=0.35)
+    fig.tight_layout()
+
+    _save(fig, f"nacelle_{nacelle_id}_angles.pdf")
+    return fig
+
+
+def plot_all_nacelle_angles(result: dict) -> plt.Figure:
+    """
+    Both Cardan angles for all 4 nacelles on a single 4-panel figure.
+    Gives a direct side-by-side comparison across sub-systems.
+    """
+    t      = result['t']
+    bodies = result['bodies']
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 8), sharex=True, sharey=True)
+    fig.suptitle("All Nacelles — Cardan Angles", fontweight='bold')
+
+    for k, ax in enumerate(axes.flat, start=1):
+        nacelle_body = next(b for b in bodies if b.name == f'nacelle_{k}')
+        q0, q1 = nacelle_body.q_indices[0], nacelle_body.q_indices[1]
+
+        ax.plot(t, np.degrees(result['q'][:, q0]),
+                color='steelblue', linewidth=1.4, label='Cardan 1')
+        ax.plot(t, np.degrees(result['q'][:, q1]),
+                color='darkorange', linewidth=1.4, linestyle='--', label='Cardan 2')
+
+        ax.set_title(f'Nacelle {k}', fontsize=10)
+        ax.grid(True, alpha=0.35)
+        ax.set_ylabel("θ  [deg]")
+
+    # Shared x-label and legend on bottom row only
+    for ax in axes[1]:
+        ax.set_xlabel("Time  [s]")
+    axes[0, 0].legend(fontsize=8)
+
+    fig.tight_layout()
+    _save(fig, "all_nacelles_angles.pdf")
+    return fig
+
 # ═══════════════════════════════════════════════════════════════════════════ #
 #  Utility                                                                    #
 # ═══════════════════════════════════════════════════════════════════════════ #

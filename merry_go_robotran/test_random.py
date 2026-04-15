@@ -20,6 +20,9 @@ qdd = np.zeros(n_dof)
 # Example: pole spinning at 0.5 rad/s
 tilt1 = next(b for b in bodies if b.name == "pole_tilt1")
 tilt2 = next(b for b in bodies if b.name == "pole_tilt2")
+pendulum_idx = [4, 6, 8, 10]
+pend_q = -75 * np.pi / 180
+q[pendulum_idx] = pend_q
 #qd[pole.q_indices[0]] = 0.5  # ω_pole = 0.5 rad/s
 qd1 = np.pi**2 / 180 * np.sin(np.pi / 2)
 qd[tilt1.q_indices[0]] = qd1
@@ -39,6 +42,7 @@ forward_pass(bodies, joints, state)
 
 # --- 4. Inspect per-body quantities ---
 for body in bodies:
+    continue
     i = body.body_id
     print(f"\n{'='*50}")
     print(f"Body {i}: {body.name}")
@@ -52,9 +56,9 @@ for body in bodies:
 
 # --- 5. Inspect the mass matrix ---
 backward_pass(bodies, joints, state)
-M, c = assemble_Mc(bodies, joints, state)
+#M, c = assemble_Mc(bodies, joints, state)
 np.set_printoptions(precision=1, suppress=True)
-print(f"\nM (mass matrix):\n{M}")
-print(f"\nc (bias vector):\n{c}")
-print(f"\nM symmetry check: {np.allclose(M, M.T)}")
-print(f"M eigenvalues: {np.linalg.eigvalsh(M)}")
+#print(f"\nM (mass matrix):\n{M}")
+#print(f"\nc (bias vector):\n{c}")
+#print(f"\nM symmetry check: {np.allclose(M, M.T)}")
+#print(f"M eigenvalues: {np.linalg.eigvalsh(M)}")

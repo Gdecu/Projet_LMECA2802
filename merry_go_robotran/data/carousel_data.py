@@ -150,7 +150,7 @@ r_pole_joint_to_com = np.array([0.0, 0.0, 2])#  2m COM given in doc L_pole / 2.0
 # --- Bras (identiques, orientés à 90° l'un de l'autre) ---
 # Les 4 bras partent du sommet du pôle (z = L_pole = 4.5 m)
 # Chaque bras est dans le plan horizontal ; longueur = 1 m (jusqu'à l'axe de la charnière pendule)
-L_arm = 1.0-0.25         # [m] longueur du bras (axe pôle -> charnière pendule)
+L_arm = 1.0#-0.25         # [m] longueur du bras (axe pôle -> charnière pendule)
 # with this arm starts outside of pole
 
 # Angle de chaque bras dans le plan horizontal (quand pôle vertical, repère inertiel)
@@ -234,7 +234,7 @@ I_pendulum = np.diag([I_pendulum_tra, I_pendulum_tra, I_pendulum_main])
 # Pendules 1, 3, 4 : normal ; Pendule 2 : rouillé (valeur ×200)
 damping_pendulum_hinge = {
     "pendulum_1": 100.0,     # [N·s/m]
-    "pendulum_2": 20000.0,   # [N·s/m] charnière rouillée
+    "pendulum_2": 100.0,#20000.0,   # [N·s/m] charnière rouillée
     "pendulum_3": 100.0,
     "pendulum_4": 100.0,
 }
@@ -277,6 +277,13 @@ T_motor_A        = 500.0            # [N·m]  amplitude phase 2
 omega_ctrl_motor = 2.0 * pi         # [rad/s] fréquence phase 2
 omega_pole_threshold = 0.8          # [rad/s] seuil de vitesse
 
+def motor_torque(t, t_cross):
+    if t < 0.5 + t_cross:
+        torque = T_motor_phase1 * (1 + np.cos(omega_ctrl_motor * t - 2 * np.pi * t_cross))
+    else:
+        torque = 0
+    return torque
+
 # --- Force de vent sur chaque nacelle ---
 # F = A*(1 - cos(ω*t)) dans la direction I1 (force sinusoïdale)
 F_wind_A     = 300.0                # [N]    amplitude
@@ -298,7 +305,7 @@ def ext_force(t):
 # φ2     = 0
 # =============================================================================
 
-tilt_A       = 2.5 * (2.0 * pi / 360.0)    # [rad]    ≈ 0.04363 rad (≈ 2.5°)
+tilt_A       = 0#2.5 * (2.0 * pi / 360.0)    # [rad]    ≈ 0.04363 rad (≈ 2.5°)
 tilt_omega   = 0.4 * pi                     # [rad/s]
 tilt_phi1    = pi / 2.0                     # [rad]    pour tilt axe I1
 tilt_phi2    = 0.0                          # [rad]    pour tilt axe I2
@@ -335,7 +342,7 @@ def driven_tilt2_dot(t):
 #   - Nacelles  : alignées sur le pendule (Cardan à 0)
 # =============================================================================
 
-theta_pendulum_init = -75.0 * pi / 180.0    # [rad]  ≈ 1.3090 rad
+theta_pendulum_init = -15.0 * pi / 180.0    # [rad]  ≈ 1.3090 rad
 
 q0 = {
     "pole_tilt1":  driven_tilt1(0.0),       # = 0 car cos(π/2) = 0 → tilt_A*(1-0)
