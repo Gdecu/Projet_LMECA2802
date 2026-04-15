@@ -10,7 +10,7 @@
 #
 #	http://www.robotran.be 
 #
-#	==> Generation Date: Wed Apr 15 02:11:51 2026
+#	==> Generation Date: Wed Apr 15 02:34:06 2026
 #	==> using automatic loading with extension .mbs 
 #
 #	==> Project name: lmerry_go
@@ -213,9 +213,9 @@ def sensor(sens, s, isens):
     OPcp4_13 = OPcp4_12+ROcp4_42*qdd[3]+qd[3]*(OMcp4_22*S2-ROcp4_52*qd[1])
     OPcp4_23 = OPcp4_22+ROcp4_52*qdd[3]+qd[3]*(-OMcp4_12*S2+ROcp4_42*qd[1])
     OPcp4_33 = qdd[1]+qdd[3]*S2+qd[3]*(OMcp4_12*ROcp4_52-OMcp4_22*ROcp4_42)
-    RLcp4_14 = ROcp4_73*s.dpt[3,1]
-    RLcp4_24 = ROcp4_83*s.dpt[3,1]
-    RLcp4_34 = ROcp4_93*s.dpt[3,1]
+    RLcp4_14 = ROcp4_13*s.dpt[1,1]+ROcp4_73*s.dpt[3,1]
+    RLcp4_24 = ROcp4_23*s.dpt[1,1]+ROcp4_83*s.dpt[3,1]
+    RLcp4_34 = ROcp4_33*s.dpt[1,1]+ROcp4_93*s.dpt[3,1]
     JTcp4_14_2 = RLcp4_34*S1
     JTcp4_24_2 = -RLcp4_34*C1
     JTcp4_34_2 = -RLcp4_14*S1+RLcp4_24*C1
@@ -310,9 +310,9 @@ def sensor(sens, s, isens):
     OPcp5_13 = OPcp5_12+ROcp5_42*qdd[3]+qd[3]*(OMcp5_22*S2-ROcp5_52*qd[1])
     OPcp5_23 = OPcp5_22+ROcp5_52*qdd[3]+qd[3]*(-OMcp5_12*S2+ROcp5_42*qd[1])
     OPcp5_33 = qdd[1]+qdd[3]*S2+qd[3]*(OMcp5_12*ROcp5_52-OMcp5_22*ROcp5_42)
-    RLcp5_14 = ROcp5_73*s.dpt[3,1]
-    RLcp5_24 = ROcp5_83*s.dpt[3,1]
-    RLcp5_34 = ROcp5_93*s.dpt[3,1]
+    RLcp5_14 = ROcp5_13*s.dpt[1,1]+ROcp5_73*s.dpt[3,1]
+    RLcp5_24 = ROcp5_23*s.dpt[1,1]+ROcp5_83*s.dpt[3,1]
+    RLcp5_34 = ROcp5_33*s.dpt[1,1]+ROcp5_93*s.dpt[3,1]
     JTcp5_14_2 = RLcp5_34*S1
     JTcp5_24_2 = -RLcp5_34*C1
     JTcp5_34_2 = -RLcp5_14*S1+RLcp5_24*C1
@@ -451,9 +451,9 @@ def sensor(sens, s, isens):
     OPcp6_13 = OPcp6_12+ROcp6_42*qdd[3]+qd[3]*(OMcp6_22*S2-ROcp6_52*qd[1])
     OPcp6_23 = OPcp6_22+ROcp6_52*qdd[3]+qd[3]*(-OMcp6_12*S2+ROcp6_42*qd[1])
     OPcp6_33 = qdd[1]+qdd[3]*S2+qd[3]*(OMcp6_12*ROcp6_52-OMcp6_22*ROcp6_42)
-    RLcp6_14 = ROcp6_73*s.dpt[3,1]
-    RLcp6_24 = ROcp6_83*s.dpt[3,1]
-    RLcp6_34 = ROcp6_93*s.dpt[3,1]
+    RLcp6_14 = ROcp6_13*s.dpt[1,1]+ROcp6_73*s.dpt[3,1]
+    RLcp6_24 = ROcp6_23*s.dpt[1,1]+ROcp6_83*s.dpt[3,1]
+    RLcp6_34 = ROcp6_33*s.dpt[1,1]+ROcp6_93*s.dpt[3,1]
     JTcp6_14_2 = RLcp6_34*S1
     JTcp6_24_2 = -RLcp6_34*C1
     JTcp6_34_2 = -RLcp6_14*S1+RLcp6_24*C1

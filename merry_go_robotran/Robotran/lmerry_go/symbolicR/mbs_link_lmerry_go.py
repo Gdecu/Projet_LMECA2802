@@ -10,7 +10,7 @@
 #
 #	http://www.robotran.be 
 #
-#	==> Generation Date: Wed Apr 15 02:11:51 2026
+#	==> Generation Date: Wed Apr 15 02:34:06 2026
 #	==> using automatic loading with extension .mbs 
 #
 #	==> Project name: lmerry_go
@@ -47,10 +47,11 @@ def link(frc, trq, Flink, Z, Zd, s, tsim):
 
     RLlnk2_12 = s.dpt[1,10]*C4+s.dpt[3,10]*S4
     RLlnk2_32 = -s.dpt[1,10]*S4+s.dpt[3,10]*C4
+    POlnk2_12 = RLlnk2_12+s.dpt[1,1]
     POlnk2_32 = RLlnk2_32+s.dpt[3,1]
     ORlnk2_12 = qd[4]*RLlnk2_32
     ORlnk2_32 = -qd[4]*RLlnk2_12
-    Plnk11 = RLlnk2_12-s.dpt[1,5]
+    Plnk11 = POlnk2_12-s.dpt[1,5]
     Plnk31 = POlnk2_32-s.dpt[3,5]
     PPlnk1 = Plnk11*Plnk11+Plnk31*Plnk31
     Z1 = sqrt(PPlnk1)

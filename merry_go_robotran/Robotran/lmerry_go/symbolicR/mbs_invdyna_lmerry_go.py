@@ -10,7 +10,7 @@
 #
 #	http://www.robotran.be 
 #
-#	==> Generation Date: Wed Apr 15 02:11:51 2026
+#	==> Generation Date: Wed Apr 15 02:34:06 2026
 #	==> using automatic loading with extension .mbs 
 #
 #	==> Project name: lmerry_go
@@ -106,9 +106,9 @@ def invdyna(phi,s,tsim):
     BS94 = -OM14*OM14-OM24*OM24
     BETA34 = BS34+OMp24
     BETA64 = BS64-OMp14
-    ALPHA14 = C4*(ALPHA13+BETA33*s.dpt[3,1])-S4*(ALPHA33+BS93*s.dpt[3,1])
-    ALPHA24 = ALPHA22+BETA63*s.dpt[3,1]
-    ALPHA34 = C4*(ALPHA33+BS93*s.dpt[3,1])+S4*(ALPHA13+BETA33*s.dpt[3,1])
+    ALPHA14 = C4*(ALPHA13+BETA33*s.dpt[3,1]+BS13*s.dpt[1,1])-S4*(ALPHA33+BETA73*s.dpt[1,1]+BS93*s.dpt[3,1])
+    ALPHA24 = ALPHA22+BETA43*s.dpt[1,1]+BETA63*s.dpt[3,1]
+    ALPHA34 = C4*(ALPHA33+BETA73*s.dpt[1,1]+BS93*s.dpt[3,1])+S4*(ALPHA13+BETA33*s.dpt[3,1]+BS13*s.dpt[1,1])
     OM15 = qd[5]+OM14
     OM25 = OM24*C5+OM34*S5
     OM35 = -OM24*S5+OM34*C5
@@ -332,10 +332,11 @@ def invdyna(phi,s,tsim):
  	  Cq310*S10+Cq313*S13+Cq34*S4+Cq37*S7-Fq213*s.dpt[3,4]-Fq24*s.dpt[3,1]-Fq27*s.dpt[3,2]-Fs23*s.l[3,3]+s.dpt[2,2]*(-Fq17* \
  	  S7+Fq37*C7)+s.dpt[2,4]*(-Fq113*S13+Fq313*C13)
     Cq23 = -s.trq[2,3]+Cq210+Cq213+Cq24+Cq27+s.In[1,3]*OM13*OM33+s.In[5,3]*OMp23-s.In[9,3]*OM13*OM33+Fs13*s.l[3,3]- \
- 	  s.dpt[1,3]*(-Fq110*S10+Fq310*C10)+s.dpt[3,1]*(Fq14*C4+Fq34*S4)+s.dpt[3,2]*(Fq17*C7+Fq37*S7)+s.dpt[3,4]*(Fq113*C13+ \
- 	  Fq313*S13)
+ 	  s.dpt[1,1]*(-Fq14*S4+Fq34*C4)-s.dpt[1,3]*(-Fq110*S10+Fq310*C10)+s.dpt[3,1]*(Fq14*C4+Fq34*S4)+s.dpt[3,2]*(Fq17*C7+Fq37* \
+ 	  S7)+s.dpt[3,4]*(Fq113*C13+Fq313*S13)
     Cq33 = -s.trq[3,3]-s.In[1,3]*OM13*OM23+s.In[5,3]*OM13*OM23+s.In[9,3]*OMp33-Cq110*S10-Cq113*S13-Cq14*S4-Cq17*S7+ \
- 	  Cq310*C10+Cq313*C13+Cq34*C4+Cq37*C7+Fq210*s.dpt[1,3]-s.dpt[2,2]*(Fq17*C7+Fq37*S7)-s.dpt[2,4]*(Fq113*C13+Fq313*S13)
+ 	  Cq310*C10+Cq313*C13+Cq34*C4+Cq37*C7+Fq210*s.dpt[1,3]+Fq24*s.dpt[1,1]-s.dpt[2,2]*(Fq17*C7+Fq37*S7)-s.dpt[2,4]*(Fq113* \
+ 	  C13+Fq313*S13)
     Cq12 = Cq13*C3+Cq33*S3
     Cq32 = -Cq13*S3+Cq33*C3
     Cq31 = Cq23*S2+Cq32*C2

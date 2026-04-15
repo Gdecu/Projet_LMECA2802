@@ -10,7 +10,7 @@
 #
 #	http://www.robotran.be 
 #
-#	==> Generation Date: Wed Apr 15 02:11:51 2026
+#	==> Generation Date: Wed Apr 15 02:34:06 2026
 #	==> using automatic loading with extension .mbs 
 #
 #	==> Project name: lmerry_go
@@ -138,9 +138,9 @@ def extforces(frc, trq, s, tsim):
     OPcp1_13 = OPcp1_12+qd[3]*(-qd[1]*ROcp1_52+OMcp1_22*S2)+qdd[3]*ROcp1_42
     OPcp1_23 = OPcp1_22+qd[3]*(qd[1]*ROcp1_42-OMcp1_12*S2)+qdd[3]*ROcp1_52
     OPcp1_33 = qdd[1]+qd[3]*(OMcp1_12*ROcp1_52-OMcp1_22*ROcp1_42)+qdd[3]*S2
-    RLcp1_14 = ROcp1_73*s.dpt[3,1]
-    RLcp1_24 = ROcp1_83*s.dpt[3,1]
-    RLcp1_34 = ROcp1_93*s.dpt[3,1]
+    RLcp1_14 = ROcp1_13*s.dpt[1,1]+ROcp1_73*s.dpt[3,1]
+    RLcp1_24 = ROcp1_23*s.dpt[1,1]+ROcp1_83*s.dpt[3,1]
+    RLcp1_34 = ROcp1_33*s.dpt[1,1]+ROcp1_93*s.dpt[3,1]
     OMcp1_14 = OMcp1_13+qd[4]*ROcp1_42
     OMcp1_24 = OMcp1_23+qd[4]*ROcp1_52
     OMcp1_34 = OMcp1_33+qd[4]*S2

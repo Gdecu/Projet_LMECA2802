@@ -88,7 +88,7 @@ axis.plot(t, omega_deg_s, label='Main pole angular velocity', color='darkblue')
 # Mise en forme pour ressembler au graphe du MOOC
 axis.grid(True, linestyle='--', alpha=0.7)
 axis.set_xlim(left=0.0, right=3.0)
-axis.set_ylim(bottom=-50.0, top=100.0)
+axis.set_ylim(bottom=-50.0, top=125.0)
 axis.set_xlabel('Time [s]', fontsize=12)
 axis.set_ylabel('Angular velocity [deg/s]', fontsize=12)
 axis.set_title('Angular velocity around the vertical axis of the main pole as a function of time', fontsize=13)
