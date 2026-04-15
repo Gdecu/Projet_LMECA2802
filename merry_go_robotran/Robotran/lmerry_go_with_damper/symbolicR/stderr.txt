@@ -1,0 +1,254 @@
+
+##############################################################
+#	file6.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+ Warning (error_data) : The link(1D or 3D) menus require the presence of link(s) (1D or 3D) in the MBS 
+
+
+
+ Warning in the symbolic generator !
+
+
+
+		Maximum simultaneous symbolic expressions :  176
+
+		Maximum number of allocated Kbytes :  8
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Warning during symbolic generation ! ***
+
+
+
+
+##############################################################
+#	file7.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+	Computation of the kinematics........
+
+	Computation of the dynamics....................
+
+		Joints   15  14  13  12  11  10   9   8   7   6
+
+		    -->   5   4   3   2   1
+
+	Elimination of the superfluous equations.....................
+
+
+		Maximum simultaneous symbolic expressions :  2253
+
+		Maximum number of allocated Kbytes :  105
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Generation symbolique reussie ! ***
+
+
+
+
+##############################################################
+#	file1.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+	Elimination of the superfluous equations.....................
+
+
+		Maximum simultaneous symbolic expressions :  2714
+
+		Maximum number of allocated Kbytes :  127
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Generation symbolique reussie ! ***
+
+
+
+
+##############################################################
+#	file5.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+	Elimination of the superfluous equations.....................
+
+
+		Maximum simultaneous symbolic expressions :  3159
+
+		Maximum number of allocated Kbytes :  148
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Generation symbolique reussie ! ***
+
+
+
+
+##############################################################
+#	file3.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+ Warning (error_data): useless process for this multibody model !
+
+
+
+ Warning in the symbolic generator !
+
+
+
+		Maximum simultaneous symbolic expressions :  176
+
+		Maximum number of allocated Kbytes :  8
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Warning during symbolic generation ! ***
+
+
+
+
+##############################################################
+#	file1b.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+	Elimination of the superfluous equations.....................
+
+
+		Maximum simultaneous symbolic expressions :  6536
+
+		Maximum number of allocated Kbytes :  306
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Generation symbolique reussie ! ***
+
+
+
+
+##############################################################
+#	file0.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+	Computation of the kinematics........
+
+	Computation of the dynamics.....................
+
+		Joints   15  14  13  12  11  10   9   8   7   6
+
+		    -->   5   4   3   2   1
+
+	Elimination of the superfluous equations.....................
+
+
+		Maximum simultaneous symbolic expressions :  4466
+
+		Maximum number of allocated Kbytes :  209
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Generation symbolique reussie ! ***
+
+
+
+
+##############################################################
+#	file4.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+ Warning (error_data): useless process for this multibody model !
+
+
+
+ Warning in the symbolic generator !
+
+
+
+		Maximum simultaneous symbolic expressions :  176
+
+		Maximum number of allocated Kbytes :  8
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Warning during symbolic generation ! ***
+
+
+
+
+##############################################################
+#	file2.gen 15/04/2026 02:11:51    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
+
+	Elimination of the superfluous equations.....................
+
+
+		Maximum simultaneous symbolic expressions :  660
+
+		Maximum number of allocated Kbytes :  30
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Generation symbolique reussie ! ***
+
+
+
