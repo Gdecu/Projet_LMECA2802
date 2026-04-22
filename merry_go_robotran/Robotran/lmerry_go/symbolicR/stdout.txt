@@ -1,8 +1,0 @@
-
-##############################################################
-#	file6.gen 15/04/2026 02:34:06    messages
-##############################################################
-    Old current.gen /usr/local/robotran/users/MECA2802/upload/file6.gen loading
-Symbolic generation file : /usr/local/robotran/users/MECA2802/upload/file6.gen
-Project: /usr/local/robotran/users/MECA2802/upload/upload.mbs
-F27 - Link Forces (3D)
