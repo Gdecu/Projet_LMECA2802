@@ -1,25 +1,48 @@
 
 ##############################################################
-#	file7.gen 22/04/2026 23:26:04    errors
+#	file6.gen 23/04/2026 00:09:28    errors
 ##############################################################
 git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
 Warning !
 Unknown option/flag found in generation file : useXML
 
-	Computation of the kinematics........
 
-	Computation of the dynamics....................
+ Warning (error_data) : The link(1D or 3D) menus require the presence of link(s) (1D or 3D) in the MBS 
 
-		Joints   15  14  13  12  11  10   9   8   7   6
 
-		    -->   5   4   3   2   1
+
+ Warning in the symbolic generator !
+
+
+
+		Maximum simultaneous symbolic expressions :  183
+
+		Maximum number of allocated Kbytes :  8
+
+
+	The symbolic equations have been generated 
+	in the directory: /usr/local/robotran/users/MECA2802/upload/
+
+
+ 		*** Warning during symbolic generation ! ***
+
+
+
+
+##############################################################
+#	file2.gen 23/04/2026 00:09:28    errors
+##############################################################
+git hash : 0e4e6a608eeee06956095d2f2ad315abdb092777
+Warning !
+Unknown option/flag found in generation file : useXML
+
 
 	Elimination of the superfluous equations.....................
 
 
-		Maximum simultaneous symbolic expressions :  2305
+		Maximum simultaneous symbolic expressions :  665
 
-		Maximum number of allocated Kbytes :  108
+		Maximum number of allocated Kbytes :  31
 
 
 	The symbolic equations have been generated 

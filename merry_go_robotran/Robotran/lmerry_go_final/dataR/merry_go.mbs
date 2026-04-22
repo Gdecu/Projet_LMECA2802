@@ -281,6 +281,74 @@
           <x3D />
         </graphics>
       </point>
+      <point>
+        <pointname>Point_Spring_Pole_1</pointname>
+        <coordinates>
+          <x>0.5</x>
+          <y>0.0</y>
+          <z>4.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>1129.0</x>
+              <y>372.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
+      <point>
+        <pointname>Point_Spring_Pole_2</pointname>
+        <coordinates>
+          <x>0.0</x>
+          <y>0.5</y>
+          <z>4.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>1341.0</x>
+              <y>202.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
+      <point>
+        <pointname>Point_Spring_Pole_3</pointname>
+        <coordinates>
+          <x>-0.5</x>
+          <y>0.0</y>
+          <z>4.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>610.0</x>
+              <y>196.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
+      <point>
+        <pointname>Point_Spring_Pole_4</pointname>
+        <coordinates>
+          <x>0.0</x>
+          <y>-0.4</y>
+          <z>4.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>683.0</x>
+              <y>352.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
       <graphics>
         <x2D>
           <position>
@@ -362,6 +430,23 @@
             <position>
               <x>1419.0</x>
               <y>649.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
+      <point>
+        <pointname>Point_Spring_Pend_1</pointname>
+        <coordinates>
+          <x>-0.1</x>
+          <y>0.0</y>
+          <z>-1.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>1392.0</x>
+              <y>499.0</y>
             </position>
           </x2D>
           <x3D />
@@ -621,6 +706,23 @@
           <x3D />
         </graphics>
       </point>
+      <point>
+        <pointname>Point_Spring_Pend_2</pointname>
+        <coordinates>
+          <x>0.0</x>
+          <y>-0.1</y>
+          <z>-1.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>1648.0</x>
+              <y>215.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
       <graphics>
         <x2D>
           <position>
@@ -870,6 +972,23 @@
             <position>
               <x>370.0</x>
               <y>383.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
+      <point>
+        <pointname>Point_Spring_Pend_3</pointname>
+        <coordinates>
+          <x>0.1</x>
+          <y>0.0</y>
+          <z>-1.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>397.0</x>
+              <y>173.0</y>
             </position>
           </x2D>
           <x3D />
@@ -1129,6 +1248,23 @@
           <x3D />
         </graphics>
       </point>
+      <point>
+        <pointname>Point_Spring_Pend_4</pointname>
+        <coordinates>
+          <x>0.0</x>
+          <y>0.1</y>
+          <z>-1.5</z>
+        </coordinates>
+        <graphics>
+          <x2D>
+            <position>
+              <x>550.0</x>
+              <y>453.0</y>
+            </position>
+          </x2D>
+          <x3D />
+        </graphics>
+      </point>
       <graphics>
         <x2D>
           <position>
@@ -1328,6 +1464,73 @@
       </graphics>
     </body>
   </bodytree>
+  <links>
+    <!--this is the link list-->
+    <link>
+      <name>Link_0</name>
+      <endpoint1>
+        <bodyname>Pole</bodyname>
+        <pointname>Point_Spring_Pole_1</pointname>
+      </endpoint1>
+      <endpoint2>
+        <bodyname>Pendulum_1</bodyname>
+        <pointname>Point_Spring_Pend_1</pointname>
+      </endpoint2>
+      <graphics>
+        <x3D>
+          <shown />
+        </x3D>
+      </graphics>
+    </link>
+    <link>
+      <name>Link_1</name>
+      <endpoint1>
+        <bodyname>Pole</bodyname>
+        <pointname>Point_Spring_Pole_2</pointname>
+      </endpoint1>
+      <endpoint2>
+        <bodyname>Pendulum_2</bodyname>
+        <pointname>Point_Spring_Pend_2</pointname>
+      </endpoint2>
+      <graphics>
+        <x3D>
+          <shown />
+        </x3D>
+      </graphics>
+    </link>
+    <link>
+      <name>Link_2</name>
+      <endpoint1>
+        <bodyname>Pole</bodyname>
+        <pointname>Point_Spring_Pole_3</pointname>
+      </endpoint1>
+      <endpoint2>
+        <bodyname>Pendulum_3</bodyname>
+        <pointname>Point_Spring_Pend_3</pointname>
+      </endpoint2>
+      <graphics>
+        <x3D>
+          <shown />
+        </x3D>
+      </graphics>
+    </link>
+    <link>
+      <name>Link_3</name>
+      <endpoint1>
+        <bodyname>Pole</bodyname>
+        <pointname>Point_Spring_Pole_4</pointname>
+      </endpoint1>
+      <endpoint2>
+        <bodyname>Pendulum_4</bodyname>
+        <pointname>Point_Spring_Pend_4</pointname>
+      </endpoint2>
+      <graphics>
+        <x3D>
+          <shown />
+        </x3D>
+      </graphics>
+    </link>
+  </links>
   <user_models>
     <!--this is the userModel list-->
     <user_model>
