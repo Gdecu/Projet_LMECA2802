@@ -403,3 +403,200 @@ def generate_all_plots(result: dict,
 
     plt.close('all')
     return figs
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot P — Main pole kinematics: θ, ω, α on a single 1×3 figure             #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+def plot_pole(result: dict, ref: dict = None) -> plt.Figure:
+    """
+    Three-panel figure (1 row × 3 columns) for the main pole.
+    If `ref` is provided (output of load_reference_data), the Robotran
+    reference curves are overlaid in dashed red on each panel.
+    """
+    t      = result['t']
+    bodies = result['bodies']
+    q_idx  = _find_q_index(bodies, 'pole', dof=0)
+
+    theta_deg = np.degrees(result['q']  [:, q_idx])
+    omega_deg = np.degrees(result['qd'] [:, q_idx])
+    alpha_deg = np.degrees(result['qdd'][:, q_idx])
+
+    omega_thresh_deg = np.degrees(cd.omega_pole_threshold)
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4), sharex=True)
+    fig.suptitle("Main Pole — Kinematics", fontweight='bold')
+
+    signals   = [theta_deg,        omega_deg,         alpha_deg       ]
+    ylabels   = ["θ_pole  [deg]",  "ω_pole  [deg/s]", "α_pole  [deg/s²]"]
+    titles    = ["Angular Position","Angular Velocity","Angular Acceleration"]
+    ref_keys  = ['pole_theta',     'pole_omega',      'pole_alpha'    ]
+    colors    = ['steelblue',      'darkorange',      'seagreen'      ]
+
+    for ax, sig, ylabel, title, rkey, color in zip(
+            axes, signals, ylabels, titles, ref_keys, colors):
+
+        ax.plot(t, sig, color=color, linewidth=1.6, label='Simulation')
+
+        # Overlay reference curve if provided
+        if ref is not None:
+            ax.plot(ref['t'], ref[rkey], color='crimson', linewidth=1.2,
+                    linestyle='--', label='Robotran ref.')
+
+        # Motor threshold on velocity panel only
+        if rkey == 'pole_omega':
+            ax.axhline(omega_thresh_deg, ls=':', color='black', linewidth=1.0,
+                       label=f'Motor threshold  ({omega_thresh_deg:.1f} deg/s)')
+
+        ax.set_title(title)
+        ax.set_xlabel("Time  [s]")
+        ax.set_ylabel(ylabel)
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.35)
+
+    fig.tight_layout()
+    _save(fig, "pole_kinematics_full.pdf")
+    return fig
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot Q — 4×3 grid: hinge + both Cardan angles for every nacelle           #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+# Column layout for the grid
+_GRID_COL_LABELS  = ['Hinge Angle  [deg]',
+                     'Cardan Angle 1  [deg]',
+                     'Cardan Angle 2  [deg]']
+_GRID_COL_TITLES  = ['Pendulum Hinge',
+                     'Nacelle Cardan 1',
+                     'Nacelle Cardan 2']
+_GRID_COL_COLORS  = ['steelblue', 'darkorange', 'seagreen']
+
+def plot_nacelle_pendulum_grid(result: dict, ref: dict = None) -> plt.Figure:
+    """
+    Large 4×3 figure. If `ref` is provided, Robotran reference curves are
+    overlaid in dashed red on every cell.
+    """
+    t      = result['t']
+    bodies = result['bodies']
+
+    N_ROWS, N_COLS  = 4, 3
+    ref_col_keys    = ['hinge', 'cadran1', 'cadran2']   # keys inside ref dict
+
+    fig, axes = plt.subplots(N_ROWS, N_COLS,
+                             figsize=(16, 12),
+                             sharex=True,
+                             sharey='col')
+    fig.suptitle("Nacelle & Pendulum Angles — All Sub-Systems", fontweight='bold',
+                 fontsize=13)
+
+    for row in range(N_ROWS):
+        nacelle_idx  = row + 1
+
+        # Retrieve simulation signals
+        hinge_idx    = _find_q_index(bodies, f'pendulum_{nacelle_idx}', dof=0)
+        theta_hinge  = np.degrees(result['q'][:, hinge_idx])
+
+        nacelle_body = next(b for b in bodies if b.name == f'nacelle_{nacelle_idx}')
+        theta_c1     = np.degrees(result['q'][:, nacelle_body.q_indices[0]])
+        theta_c2     = np.degrees(result['q'][:, nacelle_body.q_indices[1]])
+
+        sim_signals  = [theta_hinge, theta_c1, theta_c2]
+
+        for col, (signal, color, ylabel, rkey) in enumerate(zip(
+                sim_signals, _GRID_COL_COLORS, _GRID_COL_LABELS, ref_col_keys)):
+
+            ax = axes[row, col]
+            ax.plot(t, signal, color=color, linewidth=1.4, label='Simulation')
+
+            # Overlay reference curve (column `row` of the (n,4) ref array)
+            if ref is not None:
+                ref_signal = np.degrees(ref[rkey][:, row])   # convert rad→deg
+                ax.plot(ref['t'], ref_signal, color='crimson', linewidth=1.0,
+                        linestyle='--', label='Robotran ref.')
+
+            ax.grid(True, alpha=0.35)
+
+            if col == 0:
+                ax.set_ylabel(f"Sub-system {nacelle_idx}\n{ylabel}", fontsize=8)
+            else:
+                ax.set_ylabel(ylabel, fontsize=8)
+
+            if row == 0:
+                ax.set_title(_GRID_COL_TITLES[col], fontsize=10, fontweight='bold')
+                ax.legend(fontsize=7)   # legend once per column, at top
+
+            if row == N_ROWS - 1:
+                ax.set_xlabel("Time  [s]", fontsize=8)
+
+    fig.tight_layout()
+    _save(fig, "nacelle_pendulum_grid.pdf")
+    return fig
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Reference data I/O                                                         #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+# Column indices inside the saved .txt file (matches save_reference_data order)
+_REF_COL = {
+    't':           0,
+    'pole_theta':  1,  'pole_omega':  2,  'pole_alpha':  3,
+    'hinge':      [4,  5,  6,  7],        # indices for sub-systems 1-4
+    'cadran1':    [8,  9,  10, 11],
+    'cadran2':    [12, 13, 14, 15],
+}
+
+def load_reference_data(filepath: str) -> dict:
+    """
+    Load the reference arrays saved by save_reference_data().
+
+    Returns
+    -------
+    ref : dict with keys:
+        't'          : (n,)    time vector [s]
+        'pole_theta' : (n,)    pole angular position  [deg]
+        'pole_omega' : (n,)    pole angular velocity  [deg/s]
+        'pole_alpha' : (n,)    pole angular accel.    [deg/s²]
+        'hinge'      : (n, 4)  pendulum hinge angles  [rad]
+        'cadran1'    : (n, 4)  nacelle Cardan-1 angles [rad]
+        'cadran2'    : (n, 4)  nacelle Cardan-2 angles [rad]
+    """
+    data = np.loadtxt(filepath, comments='#')   # skip header lines
+
+    ref = {
+        't':          data[:, _REF_COL['t']],
+        'pole_theta': data[:, _REF_COL['pole_theta']],
+        'pole_omega': data[:, _REF_COL['pole_omega']],
+        'pole_alpha': data[:, _REF_COL['pole_alpha']],
+        'hinge':      data[:, _REF_COL['hinge']],      # shape (n, 4)
+        'cadran1':    data[:, _REF_COL['cadran1']],
+        'cadran2':    data[:, _REF_COL['cadran2']],
+    }
+    print(f"[reference] Loaded reference data ← {filepath}  ({data.shape[0]} steps)")
+    return ref
+
+def plot_force(result):
+    """
+        Large 4×3 figure. If `ref` is provided, Robotran reference curves are
+        overlaid in dashed red on every cell.
+        """
+    t = result['t']
+    bodies = result['bodies']
+
+    fig = plt.figure(figsize=(8, 5))
+
+    # Retrieve simulation signals
+    hinge_idx = _find_q_index(bodies, 'upper_pend', dof=0)
+    theta_hinge = np.degrees(result['q'][:, hinge_idx])
+
+    lower_body = next(b for b in bodies if b.name == 'lower_pend')
+    acc1 = np.degrees(result['qdd'][:, lower_body.q_indices[0]])
+    acc2 = np.degrees(result['qdd'][:, lower_body.q_indices[1]])
+    acc3 = np.degrees(result['qdd'][:, lower_body.q_indices[2]])
+    plt.plot(t, acc1, label='acc1')
+    plt.plot(t, acc2, label='acc2')
+    plt.plot(t, acc3, label='acc3')
+
+    fig.tight_layout()
+    _save(fig, "force_as_acc.pdf")
+    return fig

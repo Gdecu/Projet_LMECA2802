@@ -100,6 +100,7 @@ DRIVEN_LAW_REGISTRY: dict = {
     # Pole tilt — each is a single 1-DOF revolute body
     "pole_tilt1":  [_law_tilt1],
     "pole_tilt2":  [_law_tilt2],
+    "lower_pend":  [_law_locked]
 
     # Nacelle Cardan joints — 2 DOF each, both locked to zero
     #"nacelle_1":   [_law_locked, _law_locked],

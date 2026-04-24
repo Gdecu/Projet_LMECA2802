@@ -234,7 +234,7 @@ I_pendulum = np.diag([I_pendulum_tra, I_pendulum_tra, I_pendulum_main])
 # Pendules 1, 3, 4 : normal ; Pendule 2 : rouillé (valeur ×200)
 damping_pendulum_hinge = {
     "pendulum_1": 100.0,     # [N·s/m]
-    "pendulum_2": 100.0,#20000.0,   # [N·s/m] charnière rouillée
+    "pendulum_2": 20000,#20000.0,   # [N·s/m] charnière rouillée
     "pendulum_3": 100.0,
     "pendulum_4": 100.0,
 }
@@ -279,7 +279,7 @@ omega_pole_threshold = 0.8          # [rad/s] seuil de vitesse
 
 def motor_torque(t, t_cross):
     if t < 0.5 + t_cross:
-        torque = T_motor_phase1 * (1 + np.cos(omega_ctrl_motor * t - 2 * np.pi * t_cross))
+        torque = T_motor_A * (1 + np.cos(omega_ctrl_motor * t - 2 * np.pi * t_cross))
     else:
         torque = 0
     return torque
@@ -305,7 +305,7 @@ def ext_force(t):
 # φ2     = 0
 # =============================================================================
 
-tilt_A       = 0#2.5 * (2.0 * pi / 360.0)    # [rad]    ≈ 0.04363 rad (≈ 2.5°)
+tilt_A       = 2.5 * (2.0 * pi / 360.0)    # [rad]    ≈ 0.04363 rad (≈ 2.5°)
 tilt_omega   = 0.4 * pi                     # [rad/s]
 tilt_phi1    = pi / 2.0                     # [rad]    pour tilt axe I1
 tilt_phi2    = 0.0                          # [rad]    pour tilt axe I2
@@ -352,6 +352,7 @@ q0 = {
     "pendulum_2":  theta_pendulum_init,
     "pendulum_3":  theta_pendulum_init,
     "pendulum_4":  theta_pendulum_init,
+    "upper_pend": theta_pendulum_init,
 }
 
 qd0 = {k: 0.0 for k in q0}                # toutes les vitesses initiales nulles
@@ -506,5 +507,166 @@ def build_bodies() -> list[Body]:
 
     return bodies
 
+def build_bodies_split(len_section: float) -> list[Body]:
+    """
+        Same as build_bodies() but for the last pendulum arm, splits it in 2
+        and add driven condition of no motion so forces can be measured and
+        dimensioning can be done.
+        """
+    bodies = []
+
+    # --- Body 1: Pole ---
+    bodies.append(Body(
+        body_id=1,
+        name='pole',
+        parent_id=0,
+        mass=0,
+        inertia_com_local=np.zeros((3, 3)),
+        d_parent_to_joint_in_parent=np.zeros(3),  # [0,0,0]
+        d_joint_to_com_in_local=np.zeros(3),  # r_pole_joint_to_com not this one because no mass # [0,0,2]
+        joint_type='revolute',
+        joint_axis_in_parent=np.array([0, 0, 1]),
+        n_dof=1,
+        var_types=['u'],
+        q_indices=[0],
+    ))
+    bodies.append(Body(
+        body_id=2,
+        name='pole_tilt1',
+        parent_id=1,
+        mass=0,
+        inertia_com_local=np.zeros((3, 3)),
+        d_parent_to_joint_in_parent=np.zeros(3),
+        d_joint_to_com_in_local=np.zeros(3),
+        joint_type='revolute',
+        joint_axis_in_parent=np.array([1, 0, 0]),
+        n_dof=1,
+        var_types=['c'],
+        q_indices=[1],
+    ))
+    bodies.append(Body(
+        body_id=3,
+        name='pole_tilt2',
+        parent_id=2,
+        mass=m_pole,
+        inertia_com_local=I_pole,
+        d_parent_to_joint_in_parent=r_base_to_pole_joint,
+        d_joint_to_com_in_local=r_pole_joint_to_com,
+        joint_type='revolute',
+        joint_axis_in_parent=np.array([0, 1, 0]),
+        n_dof=1,
+        var_types=['c'],
+        q_indices=[2],
+    ))
+
+    # --- Bodies 2–9: 4× (pendulum + nacelle) ---
+    q_idx = 3  # global q index counter, starts after pole's 3 DOFs
+
+    for k in range(N_sub-1):
+        pend_id = 4 + 2 * k  #  4, 6, 8
+        nacelle_id = 5 + 2 * k  # 5, 7, 9
+        label = k + 1  # 1, 2, 3
+
+        # Arm tip location in pole frame (varies per sub-system)
+        phi = arm_angles_inertial[f'arm_{label}']
+        arm_tip_in_pole = np.array([L_arm * cos(phi), L_arm * sin(phi), L_pole])
+
+        # Hinge axis: perpendicular to both pole axis (I3) and arm direction
+        # = tangential direction in the horizontal plane
+        arm_dir = np.array([cos(phi), sin(phi), 0.0])
+        hinge_axis = np.array([-sin(phi), cos(phi), 0.0])  # I3 × arm_dir
+
+        # Damping value differs for pendulum 2 (rusted hinge)
+        pend_name = f'pendulum_{label}'
+        # no arm (included in pole), straight to pendulum)
+        bodies.append(Body.revolute(
+            body_id=pend_id,
+            name=pend_name,
+            parent_id=3,  # all pendulums attach to pole
+            mass=m_pendulum,
+            inertia_diag=[I_pendulum_tra, I_pendulum_tra, I_pendulum_main],
+            d_parent_to_joint=arm_tip_in_pole,  # skipping arms as they are attached, no joint no motion
+            d_joint_to_com=r_pendulum_hinge_to_com,  # [0,0,-1.5]
+            axis_in_parent=hinge_axis,
+            var_type='u',
+            q_index=q_idx,
+        ))
+        q_idx += 1
+
+        bodies.append(Body.cardan2(
+            body_id=nacelle_id,
+            name=f'nacelle_{label}',
+            parent_id=pend_id,
+            mass=m_nacelle,
+            inertia_diag=[I_nacelle_tra, I_nacelle_tra, I_nacelle_sym],
+            d_parent_to_joint=r_pendulum_hinge_to_nacelle_joint,  # [0,0,-3]
+            d_joint_to_com=r_nacelle_cardan_to_com,  # [0,0,-1]
+            axes_in_parent=[hinge_axis,
+                            arm_dir],  # axis 1 = hinge axis, axis 2 = arm direction
+            var_types=['u', 'u'],
+            q_indices=[q_idx, q_idx + 1],
+        ))
+        q_idx += 2
+    # Arm tip location in pole frame (varies per sub-system)
+    phi = arm_angles_inertial[f'arm_{label}']
+    arm_tip_in_pole = np.array([L_arm * cos(phi), L_arm * sin(phi), L_pole])
+        # Hinge axis: perpendicular to both pole axis (I3) and arm direction
+        # = tangential direction in the horizontal plane
+    arm_dir = np.array([cos(phi), sin(phi), 0.0])
+    hinge_axis = np.array([-sin(phi), cos(phi), 0.0])  # I3 × arm_dir
+    # calculating the new variables for upper and lower part of the pendulum arm
+    m_upper = len_section * m_pendulum / L_pendulum
+    m_lower = m_pendulum - m_upper
+    I_tra_upper = I_pendulum_tra * len_section / L_pendulum
+    I_tra_lower = I_pendulum_tra - I_tra_upper
+    # for inertia of a slender bar at its end: I = 1/3 ML**2
+    # here M is linear w/ len_section, and L too so len_section**3
+    I_main_upper = I_pendulum_main * (len_section / L_pendulum)**3
+    I_main_lower = I_pendulum_main * (1 - len_section/L_pendulum)**3
+
+
+
+        # no arm (included in pole), straight to pendulum)
+    bodies.append(Body.revolute(
+        body_id=10,
+        name="upper_pend",
+        parent_id=3,  # all pendulums attach to pole
+        mass=m_upper,
+        inertia_diag=[I_tra_upper, I_tra_upper, I_main_upper],
+        d_parent_to_joint=arm_tip_in_pole,  # skipping arms as they are attached, no joint no motion
+        d_joint_to_com=[0, 0, len_section/2],  # [0,0,-1.5]
+        axis_in_parent=hinge_axis,
+        var_type='u',
+        q_index=q_idx,
+    ))
+    q_idx += 1
+    bodies.append(Body.cardan3(
+        body_id=11,
+        name="lower_pend",
+        parent_id=10,  # all pendulums attach to pole
+        mass=m_lower,
+        inertia_diag=[I_tra_lower, I_tra_lower, I_main_lower],
+        d_parent_to_joint=[0, 0, -len_section],  # straight down with length of split section
+        d_joint_to_com=[0, 0, (L_pendulum-len_section)/2],  # [0,0,-1.5]
+        axes_in_parent=[[1, 0, 0], [0, 1, 0], [0, 0 ,1]],
+        var_types=['c','c','c'],
+        q_indices=[q_idx, q_idx+1, q_idx+2],
+    ))
+    q_idx += 3
+
+    bodies.append(Body.cardan2(
+        body_id=12,
+        name='nacelle_4',
+        parent_id=11,
+        mass=m_nacelle,
+        inertia_diag=[I_nacelle_tra, I_nacelle_tra, I_nacelle_sym],
+        d_parent_to_joint=r_pendulum_hinge_to_nacelle_joint,  # [0,0,-3]
+        d_joint_to_com=r_nacelle_cardan_to_com,  # [0,0,-1]
+        axes_in_parent=[hinge_axis, arm_dir],  # axis 1 = hinge axis, axis 2 = arm direction
+        var_types=['u', 'u'],
+        q_indices=[q_idx, q_idx + 1],
+    ))
+    q_idx += 2
+    return bodies
 #if __name__ == "__main__":
 #    print_summary()

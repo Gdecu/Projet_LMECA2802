@@ -34,7 +34,7 @@ def user_LinkForces(Z, Zd, mbs_data, tsim, identity):
     # Z0= 0.1  #m
     # Flink = k*(Z-Z0)
 
-    Flink = 0.0
+    '''Flink = 0.0
 
     # Regrouper les ID de tes 4 liens créés dans MBsysPad
     spring_ids = [
@@ -53,5 +53,5 @@ def user_LinkForces(Z, Zd, mbs_data, tsim, identity):
         # Uniquement la force élastique (traction si Z > Z0)
         Flink = K * (Z - Z0)
         Flink = K * (Z - Z0) + C * Zd # Force élastique + force de damping
-
+        '''
     return Flink

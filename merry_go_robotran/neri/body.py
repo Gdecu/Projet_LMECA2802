@@ -164,7 +164,7 @@ class Body:
         )
 
     @classmethod
-    def cardan2(cls,
+    def cardan3(cls,
                 body_id:   int,
                 name:      str,
                 parent_id: int,
@@ -177,6 +177,36 @@ class Body:
                 q_indices: list = None) -> Body:
         """Convenience constructor for a 2-DOF Cardan joint."""
         axes = np.array(axes_in_parent, dtype=float)      # shape (2,3) → transpose to (3,2)
+        assert axes.shape == (3, 3), "axes_in_parent must be (2,3) or (3,2)"
+        return cls(
+            body_id=body_id,
+            name=name,
+            parent_id=parent_id,
+            mass=mass,
+            inertia_com_local=np.diag(inertia_diag),
+            d_parent_to_joint_in_parent=np.array(d_parent_to_joint, dtype=float),
+            d_joint_to_com_in_local=np.array(d_joint_to_com, dtype=float),
+            joint_type='cardan3',
+            joint_axis_in_parent=axes,
+            n_dof=3,
+            var_types=var_types or ['u', 'u', 'u'],
+            q_indices=q_indices or [-1, -1, -1],
+        )
+
+    @classmethod
+    def cardan2(cls,
+                body_id: int,
+                name: str,
+                parent_id: int,
+                mass: float,
+                inertia_diag: list,
+                d_parent_to_joint: list,
+                d_joint_to_com: list,
+                axes_in_parent: list,  # (3,2) — two successive axes
+                var_types: list = None,
+                q_indices: list = None) -> Body:
+        """Convenience constructor for a 2-DOF Cardan joint."""
+        axes = np.array(axes_in_parent, dtype=float)  # shape (2,3) → transpose to (3,2)
         if axes.shape == (2, 3):
             axes = axes.T
         assert axes.shape == (3, 2), "axes_in_parent must be (2,3) or (3,2)"

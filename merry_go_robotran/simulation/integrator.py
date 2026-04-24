@@ -43,7 +43,6 @@ import merry_go_robotran.data.carousel_data as cd
 # ═══════════════════════════════════════════════════════════════════════════ #
 #  External force / torque builders                                           #
 # ═══════════════════════════════════════════════════════════════════════════ #
-
 def _motor_torque(t: float, omega_pole: float, t0_motor: float) -> float:
     """
     Three-phase motor torque law on the main pole rotation (I3 axis).
@@ -204,7 +203,7 @@ def make_ode(bodies: list, joints: list, state: MBState) -> callable:
         state.set_q(np.zeros(state.n_dof), np.zeros(state.n_dof), t)
         state.q[idx_u]  = q_u
         state.qd[idx_u] = qd_u
-        #inject_driven_into_state(state, driven_vals)   # writes qc, qdc, qddc
+        inject_driven_into_state(state, driven_vals)   # writes qc, qdc, qddc
 
         # ── 4. Check motor threshold for first time ───────────────────── #
         pole_body    = next(b for b in bodies if b.name == "pole")
@@ -257,8 +256,9 @@ def run_simulation(bodies: list,
                    q0_full: np.ndarray,
                    qd0_full: np.ndarray,
                    t_end:    float = 30.0,
-                   rtol:     float = 1e-4, #e-6
-                   atol:     float = 1e-6  #e-9
+                   rtol:     float = 1e-6,
+                   atol:     float = 1e-9,
+                   case:     str = '',
                    ) -> dict:
     """
     Integrate the multibody system from t=0 to t=t_end.
@@ -319,22 +319,31 @@ def run_simulation(bodies: list,
     n_steps = sol.t.shape[0]
     q_hist  = np.zeros((n_steps, n_dof))
     qd_hist = np.zeros((n_steps, n_dof))
+    qdd_hist = np.zeros((n_steps, n_dof))
 
     from merry_go_robotran.simulation.driven_vars import evaluate_driven  # local import to avoid circular
 
     for k, t_k in enumerate(sol.t):
-        q_hist[k,  idx_u] = sol.y[:nu, k]
+        # q and qd from the integrator state vector
+        q_hist[k, idx_u] = sol.y[:nu, k]
         qd_hist[k, idx_u] = sol.y[nu:, k]
 
+        # qdd requires re-evaluating the ODE — sol.y does NOT store it
+        yd_k = f_ode(t_k, sol.y[:, k])  # yd = [qd_u | qdd_u]
+        qdd_hist[k, idx_u] = yd_k[nu:]  # second half is qdd_u
+
+        # Driven coordinates
         driven_vals = evaluate_driven(bodies, t_k)
-        for q_idx, (qc, qdc, _qddc) in driven_vals.items():
-            q_hist[k,  q_idx] = qc
+        for q_idx, (qc, qdc, qddc) in driven_vals.items():
+            q_hist[k, q_idx] = qc
             qd_hist[k, q_idx] = qdc
+            qdd_hist[k, q_idx] = qddc
 
     return {
         't':      sol.t,
         'q':      q_hist,
         'qd':     qd_hist,
+        'qdd':    qdd_hist,
         'idx_u':  idx_u,
         'idx_c':  idx_c,
         'bodies': bodies,

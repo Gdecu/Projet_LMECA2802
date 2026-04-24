@@ -141,4 +141,66 @@ plt.savefig('../plot/nacelles.png', dpi=300, bbox_inches='tight')
 
 print("Nacelles plotting completed successfully.")
 
+def save_reference_data(results, mbs_data, filepath: str) -> None:
+    """
+    Extract and save all arrays needed for plot_pole and plot_nacelle_pendulum_grid
+    into a single .txt file with a named header.
+
+    Columns
+    -------
+    t                          : time vector [s]
+    pole_theta, pole_omega,
+    pole_alpha                 : pole kinematics [deg, deg/s, deg/s²]
+    hinge_1..4                 : pendulum hinge angles [rad]  (one per sub-system)
+    cadran1_1..4               : nacelle Cardan-1 angles [rad]
+    cadran2_1..4               : nacelle Cardan-2 angles [rad]
+    """
+    t = results.q[:, 0]
+
+    # --- Pole kinematics (converted to degrees) ---
+    id_pole     = mbs_data.joint_id["Pole_rotation"]
+    pole_theta  = np.degrees(results.q  [:, id_pole])
+    pole_omega  = np.degrees(results.qd [:, id_pole])
+    pole_alpha  = np.degrees(results.qdd[:, id_pole])
+
+    # --- Nacelle / pendulum angles (kept in radians, plots.py converts) ---
+    hinge_cols   = []
+    cadran1_cols = []
+    cadran2_cols = []
+    for i in range(1, 5):
+        if i == 2 or i ==3:
+            hinge_cols.append(-results.q[:, mbs_data.joint_id[f"Hinge_Pend_{i}"  ]])
+            cadran1_cols.append(-results.q[:, mbs_data.joint_id[f"Cadran1_nacelle_{i}"]])
+
+        else:
+            hinge_cols  .append(results.q[:, mbs_data.joint_id[f"Hinge_Pend_{i}"  ]])
+            cadran1_cols.append(results.q[:, mbs_data.joint_id[f"Cadran1_nacelle_{i}"]])
+        if i == 3 or i ==4:
+            cadran2_cols.append(-results.q[:, mbs_data.joint_id[f"Cadran2_nacelle_{i}"]])
+        else:
+            cadran2_cols.append(results.q[:, mbs_data.joint_id[f"Cadran2_nacelle_{i}"]])
+
+    # --- Assemble into one (n_steps × 13) array ---
+    data = np.column_stack([
+        t,
+        pole_theta, pole_omega, pole_alpha,
+        *hinge_cols,
+        *cadran1_cols,
+        *cadran2_cols,
+    ])
+
+    header = (
+        "t  "
+        "pole_theta_deg  pole_omega_deg_s  pole_alpha_deg_s2  "
+        "hinge_1  hinge_2  hinge_3  hinge_4  "
+        "cadran1_1  cadran1_2  cadran1_3  cadran1_4  "
+        "cadran2_1  cadran2_2  cadran2_3  cadran2_4"
+    )
+    np.savetxt(filepath, data, header=header, comments='# ', fmt='%.8e')
+    print(f"[reference] Saved reference data → {filepath}")
+
+
+# Call it right after the existing plots, pointing to your preferred path
+save_reference_data(results, mbs_data, '../plot/reference_data.txt')
+
 # %%
