@@ -1,30 +1,35 @@
 merry_go_robotran/
 │
 ├── data/
-│   ├── params.py            # Physical constants: masses, geometry, inertia, spring
-│   ├── topology.py          # parent[], joint_type[], var_type[] — tree definition
-│   └── initial_cond.py      # q0, qd0, t_end
+│   └── carousel_data.py             # Données et paramètres physiques du carrousel (masses, inerties, géométrie)
 │
 ├── neri/
-│   ├── body.py              # Body dataclass (m, I, d_z_ii, etc.)
-│   ├── joint.py             # Joint classes: R, C2, Fixed — provides φ(q), R(q)
-│   ├── state.py             # MBState dataclass: ω, α, β, R0i, F, L per body
-│   ├── forward.py           # Forward pass: fills state.ω, state.α for all bodies
-│   ├── backward.py          # Backward pass: fills state.F, state.L; projects Q
-│   └── assembler.py         # Last trick: builds M(q) and c(q,qd)
-│
-├── simulation/
-│   ├── driven_vars.py       # qc(t), qdc(t), qddc(t) — control laws
-│   ├── forces.py            # Motor torque, wind force, spring-damper — returns Q, Fext
-│   ├── integrator.py        # yd=f(y,t) function + solve_ivp call
-│   └── main.py              # Entry point: load → init → integrate → save → plot
+│   ├── assembly.py                  # Assemblage du système (matrices de masse, termes correctifs c(q, qd))
+│   ├── backward.py                  # Passe arrière (calcul des efforts internes F et L)
+│   ├── body.py                      # Définition de la classe représentant un corps (masse, tenseur d'inertie)
+│   ├── forward.py                   # Passe avant (calcul de la cinématique : positions, vitesses, accélérations)
+│   ├── joint.py                     # Définition des articulations et des degrés de liberté
+│   └── state.py                     # Définition de l'état du système multicorps lors de l'intégration
 │
 ├── postprocess/
-│   ├── internal_forces.py   # Extract F^i, L^i at critical sections from saved states
-│   ├── dimensioning.py      # σ, ε, safety factor, critical section search
-│   └── plots.py             # All matplotlib figures
+│   └── plots.py                     # Fonctions d'affichage et de tracé des résultats (figures matplotlib)
 │
-├── results/                 # Saved .npz output arrays
+├── results/
+│   ├── all_nacelles_angles.pdf      # Graphique des angles de toutes les nacelles
+│   ├── nacelle_pendulum_grid.pdf    # Grille de graphiques pendulaires pour les nacelles
+│   ├── pendulum_positions.pdf       # Graphique des positions des pendules
+│   ├── pole_kinematics_full.pdf     # Cinématique complète du poteau central
+│   └── pole_omega.pdf               # Vitesse de rotation (oméga) du poteau
 │
-└── validation/
-    └── gonogo.py            # Reproduce Go/No-Go curve, compare with MOOC reference
+├── Robotran/
+│   └── [Contenu lié à Robotran non détaillé ici]
+│
+├── simulation/
+│   ├── driven_vars.py               # Génération et gestion des variables commandées (lois de mouvement)
+│   └── integrator.py                # Schéma d'intégration numérique des équations de mouvement
+│
+├── debug.py                         # Script utilisé pour le débogage (tests ciblés)
+├── main.py                          # Script principal de lancement de la simulation
+├── main_dimensioning.py             # Script principal dédié au dimensionnement des pièces et efforts extrêmes
+├── structure.txt                    # Ce fichier (arborescence commentée du projet)
+└── test_random.py                   # Scripts ou essais isolés de fonctionnalités diverses
