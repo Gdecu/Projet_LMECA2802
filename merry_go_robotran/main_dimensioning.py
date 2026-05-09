@@ -38,6 +38,7 @@ from merry_go_robotran.postprocess.plots import (
     plot_nacelle_pendulum_grid,
     load_reference_data,
     plot_force,
+    plot_comparison_sections
 )
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -46,6 +47,9 @@ from merry_go_robotran.postprocess.plots import (
 
 RTOL             = 1e-6       # ODE relative tolerance
 ATOL             = 1e-9       # ODE absolute tolerance
+
+SIGMA_Y = 235e6  # Limite élastique de l'acier [Pa] (S235)
+K_SAFETY = 10     # Facteur de sécurité imposé
 
 # ═══════════════════════════════════════════════════════════════════════════ #
 #  Helper: build global initial condition vector                              #
@@ -87,9 +91,17 @@ def main():
 
     # ── Step 1: Load system ──────────────────────────────────────────── #
     print("[main] Building bodies and joints...")
+    
+    all_results = []
+
     step = 0.5
     split_sections = np.arange(3*step, 3, step)
     total = len(split_sections)
+
+    M_max_global = 0
+    section_critique = 0
+
+
     for i, len_section in enumerate(split_sections):
         bodies = build_bodies_split(len_section)
         joints = make_all_joints(bodies)
@@ -110,19 +122,45 @@ def main():
             atol=ATOL,
             case='dimensioning'
         )
-        plot_force(result)
-        print(f"\n[main] Simulation [{i+1}/{total}] complete. Results saved to results/")
+
+        # ── Step 4: Post-process results for dimensioning ────────────────── #
+        all_results.append(result)
+
+        # Identification du moment maximum sur l'axe 1 pour cette section
+        lower_body = next(b for b in result['bodies'] if b.name == 'lower_pend')
+        idx_1 = lower_body.q_indices[0]
+        M_max_local = np.max(np.abs(result['Q'][:, idx_1]))
+        
+        if M_max_local > M_max_global:
+            M_max_global = M_max_local
+            section_critique = len_section
+
+        fig = plot_force(result, len_section)
+        # Sauvegarde avec la longueur dans le nom du fichier
+        filename = f"./results/forces_internes_{len_section}m.pdf"
+        fig.savefig(filename)
+        print(f"Graphique généré : {filename}")
+        print(f"\n[main] Simulation [{i+1}/{total}] complete. Results saved to results/\n")
 
     print(f"\n[main] All simulations complete. Results saved to results/")
 
-    #plot_pole_omega(result)
-    #plot_pendulum_positions(result)
-    #plot_all_nacelle_angles(result)  # or plot_nacelle_angles(result, nacelle_id=1) for a single one
-    #ref = load_reference_data('Robotran/lmerry_go_final/plot/reference_data.txt')
-    #plot_pole(result, ref=ref)
-    #plot_nacelle_pendulum_grid(result, ref=ref)
-    #plot_nacelle_pendulum_grid(result)
-    #plot_pole(result)
+# --- Étape de calcul finale ---
+    print("\n" + "="*40)
+    print("      RÉSULTATS DE DIMENSIONNEMENT")
+    print("="*40)
+    print(f"Moment fléchissant max détecté : {M_max_global:.2f} N.m")
+    print(f"Localisation de la section critique : {section_critique} m")
+    
+    # Calcul du rayon minimal : R >= ( (4 * M) / (pi * (sigma_y / k)) )^(1/3)
+    sigma_admissible = SIGMA_Y / K_SAFETY
+    R_min = ((4 * M_max_global) / (np.pi * sigma_admissible))**(1/3)
+    
+    print(f"Contrainte admissible : {sigma_admissible/1e6:.1f} MPa")
+    print(f"Rayon minimal requis : {R_min*1000:.2f} mm")
+    print(f"Diamètre minimal conseillé : {R_min*2000:.2f} mm")
+    
+    # Tracer la comparaison
+    plot_comparison_sections(all_results, split_sections)
 
 
 if __name__ == "__main__":

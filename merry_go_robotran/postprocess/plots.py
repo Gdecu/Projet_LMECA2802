@@ -575,28 +575,76 @@ def load_reference_data(filepath: str) -> dict:
     print(f"[reference] Loaded reference data ← {filepath}  ({data.shape[0]} steps)")
     return ref
 
-def plot_force(result):
+def plot_force(result, len_section):
     """
-        Large 4×3 figure. If `ref` is provided, Robotran reference curves are
-        overlaid in dashed red on every cell.
-        """
+    Trace les 3 moments internes (flexions et torsion) au niveau de la coupure fictive.
+    """
     t = result['t']
     bodies = result['bodies']
+    Q = result['Q']  # Historique des efforts projetés [N.m]
 
-    fig = plt.figure(figsize=(8, 5))
-
-    # Retrieve simulation signals
-    hinge_idx = _find_q_index(bodies, 'upper_pend', dof=0)
-    theta_hinge = np.degrees(result['q'][:, hinge_idx])
-
+    # Trouver le corps correspondant à la moitié inférieure du pendule
     lower_body = next(b for b in bodies if b.name == 'lower_pend')
-    acc1 = np.degrees(result['qdd'][:, lower_body.q_indices[0]])
-    acc2 = np.degrees(result['qdd'][:, lower_body.q_indices[1]])
-    acc3 = np.degrees(result['qdd'][:, lower_body.q_indices[2]])
-    plt.plot(t, acc1, label='acc1')
-    plt.plot(t, acc2, label='acc2')
-    plt.plot(t, acc3, label='acc3')
+    
+    # Récupérer les indices des 3 ddl de la coupure (Cardan3)
+    idx_1 = lower_body.q_indices[0]
+    idx_2 = lower_body.q_indices[1]
+    idx_3 = lower_body.q_indices[2]
+
+    # Extraction des couples (Moments) en N.m
+    M1 = Q[:, idx_1]
+    M2 = Q[:, idx_2]
+    M3 = Q[:, idx_3]
+
+    # Création d'une belle figure avec 3 subplots
+    fig, axs = plt.subplots(3, 1, figsize=(8, 8), sharex=True)
+    fig.suptitle(f"Efforts internes dans le pendule (Coupure à {len_section} m)", fontsize=14, fontweight='bold')
+
+    # Axe 1 (Torsion ou Flexion selon définition)
+    axs[0].plot(t, M1, color='navy', linewidth=1.5)
+    axs[0].set_ylabel('Moment axe 1 [N.m]', fontweight='bold')
+    axs[0].grid(True, linestyle='--', alpha=0.7)
+
+    # Axe 2 (Torsion ou Flexion)
+    axs[1].plot(t, M2, color='darkred', linewidth=1.5)
+    axs[1].set_ylabel('Moment axe 2 [N.m]', fontweight='bold')
+    axs[1].grid(True, linestyle='--', alpha=0.7)
+
+    # Axe 3 (Torsion ou Flexion)
+    axs[2].plot(t, M3, color='forestgreen', linewidth=1.5)
+    axs[2].set_ylabel('Moment axe 3 [N.m]', fontweight='bold')
+    axs[2].set_xlabel('Temps [s]', fontweight='bold')
+    axs[2].grid(True, linestyle='--', alpha=0.7)
 
     fig.tight_layout()
-    _save(fig, "force_as_acc.pdf")
+    fig.subplots_adjust(top=0.92) # Laisse de la place pour le grand titre
+    
+    
     return fig
+
+
+def plot_comparison_sections(results_list, split_sections):
+    """
+    Superpose le moment fléchissant (Axe 1) pour les différentes sections de coupure.
+    """
+    plt.figure(figsize=(10, 6))
+    
+    for result, length in zip(results_list, split_sections):
+        t = result['t']
+        Q = result['Q']
+        bodies = result['bodies']
+        
+        # Trouver l'indice du premier ddl de la coupure (Axe 1)
+        lower_body = next(b for b in bodies if b.name == 'lower_pend')
+        idx_1 = lower_body.q_indices[0]
+        
+        plt.plot(t, Q[:, idx_1], label=f"Coupure à {length} m")
+
+    plt.title("Comparaison des moments fléchissants (Axe 1) selon la section", fontweight='bold')
+    plt.xlabel("Temps [s]")
+    plt.ylabel("Moment [N.m]")
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.6)
+    
+    plt.savefig("results/comparaison_sections_critiques.pdf")
+    plt.show()
