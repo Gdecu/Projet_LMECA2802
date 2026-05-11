@@ -608,12 +608,17 @@ def build_bodies_split(len_section: float) -> list[Body]:
         ))
         q_idx += 2
     # Arm tip location in pole frame (varies per sub-system)
-    phi = arm_angles_inertial[f'arm_{label}']
+    phi = arm_angles_inertial['arm_4']
     arm_tip_in_pole = np.array([L_arm * cos(phi), L_arm * sin(phi), L_pole])
         # Hinge axis: perpendicular to both pole axis (I3) and arm direction
         # = tangential direction in the horizontal plane
     arm_dir = np.array([cos(phi), sin(phi), 0.0])
     hinge_axis = np.array([-sin(phi), cos(phi), 0.0])  # I3 × arm_dir
+    #print(hinge_axis)
+    #rint("[1 0 0]")
+    #print('-'*20)
+    #print(arm_tip_in_pole)
+    #print('[0, -1, 4.5]')
     # calculating the new variables for upper and lower part of the pendulum arm
     m_upper = len_section * m_pendulum / L_pendulum
     m_lower = m_pendulum - m_upper
@@ -634,7 +639,7 @@ def build_bodies_split(len_section: float) -> list[Body]:
         mass=m_upper,
         inertia_diag=[I_tra_upper, I_tra_upper, I_main_upper],
         d_parent_to_joint=arm_tip_in_pole,  # skipping arms as they are attached, no joint no motion
-        d_joint_to_com=[0, 0, len_section/2],  # [0,0,-1.5]
+        d_joint_to_com=[0, 0, -len_section/2],  # [0,0,-1.5]
         axis_in_parent=hinge_axis,
         var_type='u',
         q_index=q_idx,
@@ -647,8 +652,8 @@ def build_bodies_split(len_section: float) -> list[Body]:
         mass=m_lower,
         inertia_diag=[I_tra_lower, I_tra_lower, I_main_lower],
         d_parent_to_joint=[0, 0, -len_section],  # straight down with length of split section
-        d_joint_to_com=[0, 0, (L_pendulum-len_section)/2],  # [0,0,-1.5]
-        axes_in_parent=[[1, 0, 0], [0, 1, 0], [0, 0 ,1]],
+        d_joint_to_com=[0, 0, -(L_pendulum-len_section)/2],  # [0,0,-1.5]
+        axes_in_parent=[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
         var_types=['c','c','c'],
         q_indices=[q_idx, q_idx+1, q_idx+2],
     ))

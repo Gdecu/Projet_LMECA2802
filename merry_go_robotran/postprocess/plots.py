@@ -271,140 +271,6 @@ def plot_pendulum_angles(result: dict) -> plt.Figure:
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
-#  Plot 3 — Bending moment envelope (2D colour map)                           #
-# ═══════════════════════════════════════════════════════════════════════════ #
-
-def plot_bending_moment_envelope(scan: dict, result: dict) -> plt.Figure:
-    """
-    Colour map of  |Mb(s, t)|  over the full simulation.
-    X-axis = time [s],  Y-axis = section abscissa s [m].
-    """
-    Mb_norm = scan['Mb_norm']           # (n_steps, n_sections)
-    s_array = scan['s_array']
-    t       = result['t']
-
-    fig, ax = plt.subplots(figsize=(11, 5))
-    fig.suptitle("Bending moment envelope — pendulum_1", fontweight='bold')
-
-    cmap   = cm.plasma
-    levels = np.linspace(0, Mb_norm.max(), 64)
-
-    cf = ax.contourf(t, s_array, Mb_norm.T, levels=levels, cmap=cmap)
-    fig.colorbar(cf, ax=ax, label="|Mb|  [N·m]")
-
-    ax.set_xlabel("Time  [s]")
-    ax.set_ylabel("Section abscissa  s  [m]  (0 = nacelle end)")
-    ax.grid(True, alpha=0.2, color='white')
-
-    fig.tight_layout()
-    _save(fig, "bending_envelope.png")
-    return fig
-
-
-# ═══════════════════════════════════════════════════════════════════════════ #
-#  Plot 4 — Bending moment history at critical section                        #
-# ═══════════════════════════════════════════════════════════════════════════ #
-
-def plot_critical_section_history(scan: dict,
-                                  result: dict,
-                                  idx_s_crit: int,
-                                  s_crit: float) -> plt.Figure:
-    """
-    Time history of  |Mb|  at the dynamically critical cross-section s*.
-    """
-    Mb_norm = scan['Mb_norm'][:, idx_s_crit]   # (n_steps,) at s*
-    t       = result['t']
-
-    fig, ax = plt.subplots(figsize=(10, 4))
-    fig.suptitle(f"Bending moment at critical section  s* = {s_crit*1000:.0f} mm",
-                 fontweight='bold')
-
-    ax.plot(t, Mb_norm, color='firebrick')
-    ax.axhline(Mb_norm.max(), ls='--', color='black', alpha=0.6,
-               label=f'Max = {Mb_norm.max():.0f} N·m')
-    ax.set_xlabel("Time  [s]")
-    ax.set_ylabel("|Mb(s*)|  [N·m]")
-    ax.legend()
-    ax.grid(True, alpha=0.4)
-
-    fig.tight_layout()
-    _save(fig, "critical_section_Mb.png")
-    return fig
-
-
-# ═══════════════════════════════════════════════════════════════════════════ #
-#  Plot 5 — Go/No-Go validation                                               #
-# ═══════════════════════════════════════════════════════════════════════════ #
-
-def plot_gonogo_comparison(result: dict,
-                           reference_csv: str = None) -> plt.Figure:
-    """
-    Overlay simulation results against the MOOC Go/No-Go reference curve.
-
-    The MOOC validation metric is the magnitude of the absolute acceleration
-    experienced by the passenger in nacelle_1, plotted vs. time.
-
-    If `reference_csv` is provided it must be a two-column file: t, |a|.
-    Otherwise only the simulation curve is plotted.
-
-    Parameters
-    ----------
-    result        : integrator output dict
-    reference_csv : path to MOOC reference data file (optional)
-    """
-    from merry_go_robotran.postprocess.gonogo_comparison import compute_passenger_acceleration
-
-    t    = result['t']
-    a_pg = compute_passenger_acceleration(result)   # (n_steps,) [m/s²]
-
-    fig, ax = plt.subplots(figsize=(10, 5))
-    fig.suptitle("Go/No-Go validation — passenger acceleration", fontweight='bold')
-
-    ax.plot(t, a_pg, color='steelblue', label='Simulation (this work)')
-
-    if reference_csv is not None and os.path.isfile(reference_csv):
-        ref = np.loadtxt(reference_csv, delimiter=',')
-        ax.plot(ref[:, 0], ref[:, 1], 'r--', label='MOOC reference')
-
-    ax.set_xlabel("Time  [s]")
-    ax.set_ylabel("|a_passenger|  [m/s²]")
-    ax.legend()
-    ax.grid(True, alpha=0.4)
-
-    fig.tight_layout()
-    _save(fig, "gonogo_comparison.png")
-    return fig
-
-
-# ═══════════════════════════════════════════════════════════════════════════ #
-#  Convenience: generate all plots at once                                    #
-# ═══════════════════════════════════════════════════════════════════════════ #
-
-def generate_all_plots(result: dict,
-                       scan:   dict = None,
-                       s_crit: float = None,
-                       idx_s_crit: int = None,
-                       reference_csv: str = None) -> list:
-    """
-    Generate and save all available plots.  Returns list of Figure objects.
-    """
-    figs = []
-
-    figs.append(plot_pole_kinematics(result))
-    figs.append(plot_pendulum_angles(result))
-
-    if scan is not None:
-        figs.append(plot_bending_moment_envelope(scan, result))
-        if idx_s_crit is not None and s_crit is not None:
-            figs.append(plot_critical_section_history(scan, result,
-                                                       idx_s_crit, s_crit))
-
-    figs.append(plot_gonogo_comparison(result, reference_csv))
-
-    plt.close('all')
-    return figs
-
-# ═══════════════════════════════════════════════════════════════════════════ #
 #  Plot P — Main pole kinematics: θ, ω, α on a single 1×3 figure             #
 # ═══════════════════════════════════════════════════════════════════════════ #
 
@@ -575,7 +441,56 @@ def load_reference_data(filepath: str) -> dict:
     print(f"[reference] Loaded reference data ← {filepath}  ({data.shape[0]} steps)")
     return ref
 
-def plot_force(result):
+def plot_force_vs_length(big_dict):
+    fig = plt.figure()
+    l = big_dict['length']
+    fx = big_dict['fx']
+    fy = big_dict['fy']
+    fz = big_dict['fz']
+    plt.plot(l, fx, label=f'Torque around X')
+    plt.plot(l, fy, label=f'Torque around Y')
+    plt.plot(l, fz, label=f'Torque around Z')
+    plt.xlabel('Length [m]')
+    plt.ylabel('Torqe [Nm]')
+    plt.legend()
+    _save(fig, "force_vs_length.pdf")
+    fig = plt.figure()
+    t = big_dict['time']
+    plt.plot(l, t, label=f'Time at max Q')
+    plt.xlabel('Length [m]')
+    plt.ylabel('Time [s]')
+    plt.legend()
+    _save(fig, "time_max_force.png")
+
+def plot_force(result, Q, F, L):
+    t = result['t']
+
+    # Create a figure with 3 subplots stacked vertically
+    fig, axes = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
+
+    # Titles and data mapping
+    data_groups = [Q, F, L]
+    labels = ['Q (Generalized Forces)', 'F (Applied Forces)', 'L (Loads)']
+    colors = ['r', 'g', 'b']  # Colors for the 3 vectors within each plot
+
+    for i, ax in enumerate(axes):
+        current_group = data_groups[i]
+
+        # Plot each of the 3 vectors in the current group
+        ax.plot(t, current_group[:,0], label=f'{labels[i]} - 1', color=colors[0])
+        ax.plot(t, current_group[:,1], label=f'{labels[i]} - 2', color=colors[1])
+        ax.plot(t, current_group[:,2], label=f'{labels[i]} - 3', color=colors[2])
+
+        ax.set_ylabel('Magnitude')
+        ax.set_title(labels[i])
+        ax.legend(loc='upper right')
+        ax.grid(True)
+
+    axes[2].set_xlabel('Time (t)')
+    plt.tight_layout()
+    _save(fig, "force_for1.pdf")
+
+def outdated_plot_force(result):
     """
         Large 4×3 figure. If `ref` is provided, Robotran reference curves are
         overlaid in dashed red on every cell.
