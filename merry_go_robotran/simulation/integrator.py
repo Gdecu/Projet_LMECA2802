@@ -321,6 +321,9 @@ def run_simulation(bodies: list,
     qd_hist = np.zeros((n_steps, n_dof))
     qdd_hist = np.zeros((n_steps, n_dof))
 
+    # Pour dimensioning results into a dict for post-processing and plotting
+    Q_hist = np.zeros((n_steps, n_dof))
+
     from merry_go_robotran.simulation.driven_vars import evaluate_driven  # local import to avoid circular
 
     for k, t_k in enumerate(sol.t):
@@ -339,11 +342,34 @@ def run_simulation(bodies: list,
             qd_hist[k, q_idx] = qdc
             qdd_hist[k, q_idx] = qddc
 
+        #
+        # For dimensioning case, also reconstruct external forces/torques for post-processing
+        #
+        # ==========================================================
+        # Récupération des efforts de contrainte (Inverse Dynamics)
+        # ==========================================================
+        # 1. On charge l'état cinématique EXACT (y compris les accélérations !)
+        state.set_q(q_hist[k], qd_hist[k], t_k)
+        state.qdd[:] = qdd_hist[k]
+        
+        # 2. On recalcule les forces externes pour cet instant t_k (ex: vent)
+        body_name_to_id = {b.name: b.body_id for b in bodies}
+        F_ext = _wind_force(t_k, state.n_bodies, body_name_to_id)
+        L_ext = np.zeros((state.n_bodies, 3))
+        
+        # 3. Passes NERi
+        forward_pass(bodies, joints, state)
+        backward_pass(bodies, joints, state, F_ext, L_ext)
+        
+        # 4. Sauvegarde des moments/efforts articulaires projetés (state.Q)
+        Q_hist[k, :] = state.Q.copy()
+
     return {
         't':      sol.t,
         'q':      q_hist,
         'qd':     qd_hist,
         'qdd':    qdd_hist,
+        'Q':      Q_hist,
         'idx_u':  idx_u,
         'idx_c':  idx_c,
         'bodies': bodies,

@@ -441,56 +441,7 @@ def load_reference_data(filepath: str) -> dict:
     print(f"[reference] Loaded reference data ← {filepath}  ({data.shape[0]} steps)")
     return ref
 
-def plot_force_vs_length(big_dict):
-    fig = plt.figure()
-    l = big_dict['length']
-    fx = big_dict['fx']
-    fy = big_dict['fy']
-    fz = big_dict['fz']
-    plt.plot(l, fx, label=f'Torque around X')
-    plt.plot(l, fy, label=f'Torque around Y')
-    plt.plot(l, fz, label=f'Torque around Z')
-    plt.xlabel('Length [m]')
-    plt.ylabel('Torqe [Nm]')
-    plt.legend()
-    _save(fig, "force_vs_length.pdf")
-    fig = plt.figure()
-    t = big_dict['time']
-    plt.plot(l, t, label=f'Time at max Q')
-    plt.xlabel('Length [m]')
-    plt.ylabel('Time [s]')
-    plt.legend()
-    _save(fig, "time_max_force.png")
-
-def plot_force(result, Q, F, L):
-    t = result['t']
-
-    # Create a figure with 3 subplots stacked vertically
-    fig, axes = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
-
-    # Titles and data mapping
-    data_groups = [Q, F, L]
-    labels = ['Q (Generalized Forces)', 'F (Applied Forces)', 'L (Loads)']
-    colors = ['r', 'g', 'b']  # Colors for the 3 vectors within each plot
-
-    for i, ax in enumerate(axes):
-        current_group = data_groups[i]
-
-        # Plot each of the 3 vectors in the current group
-        ax.plot(t, current_group[:,0], label=f'{labels[i]} - 1', color=colors[0])
-        ax.plot(t, current_group[:,1], label=f'{labels[i]} - 2', color=colors[1])
-        ax.plot(t, current_group[:,2], label=f'{labels[i]} - 3', color=colors[2])
-
-        ax.set_ylabel('Magnitude')
-        ax.set_title(labels[i])
-        ax.legend(loc='upper right')
-        ax.grid(True)
-
-    axes[2].set_xlabel('Time (t)')
-    plt.tight_layout()
-    _save(fig, "force_for1.pdf")
-
-def outdated_plot_force(result):
+def plot_force(result):
     """
         Large 4×3 figure. If `ref` is provided, Robotran reference curves are
         overlaid in dashed red on every cell.
