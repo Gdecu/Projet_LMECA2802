@@ -259,5 +259,10 @@ if __name__ == "__main__":
     if args.load:
         max_force_at = load_dimensioning_data(args.load)
         plot_force_vs_length(max_force_at)
+    elif os.path.exists(_DATA_FILE):
+        print(f"[main] Found existing data at {_DATA_FILE}, loading instead of re-running simulation.")
+        print("[main] Pass --load to load explicitly, or delete the file to force re-simulation.")
+        max_force_at = load_dimensioning_data(_DATA_FILE)
+        plot_force_vs_length(max_force_at)
     else:
         main()

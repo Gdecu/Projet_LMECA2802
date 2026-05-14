@@ -525,3 +525,56 @@ def plot_force(result):
     fig.tight_layout()
     _save(fig, "force_as_acc.pdf")
     return fig
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot E — Internal reaction forces vs. time at one cross-section            #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+def plot_force_vs_time(t: np.ndarray,
+                       Q_react_c: np.ndarray,
+                       len_section: float) -> plt.Figure:
+    """
+    Two-panel time-domain plot for the generalised reactions at a single cross-section.
+
+    Panel 1 — |Q| magnitude with peak marker
+    Panel 2 — three cardan-axis components Q1, Q2, Q3
+
+    Parameters
+    ----------
+    t            : (n_steps,)    time vector [s]
+    Q_react_c    : (n_steps, 3)  generalised cardan reactions [N·m]
+    len_section  : float         position of the cut along the arm [m]
+    """
+    mag = np.linalg.norm(Q_react_c, axis=1)
+    i_peak = int(np.argmax(mag))
+
+    fig, axes = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+    fig.suptitle(f"Internal Loads vs. Time — Cut at {len_section:.3f} m along arm",
+                 fontweight='bold')
+
+    # — Panel 1: magnitude ————————————————————————————————————————————————
+    ax = axes[0]
+    ax.plot(t, mag, color='steelblue', linewidth=1.6)
+    ax.axvline(t[i_peak], color='crimson', linewidth=1.0, linestyle='--',
+               label=f'Peak  {mag[i_peak]:.1f} N·m  @ t={t[i_peak]:.2f} s')
+    ax.set_ylabel("|Q|  [N·m]")
+    ax.set_title("Generalised Reaction Magnitude")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.35)
+
+    # — Panel 2: cardan components ————————————————————————————————————————
+    ax = axes[1]
+    for j, (color, label) in enumerate(zip(
+            ['crimson', 'seagreen', 'darkorange'], ['Q₁', 'Q₂', 'Q₃'])):
+        ax.plot(t, Q_react_c[:, j], color=color, linewidth=1.4, label=label)
+    ax.axhline(0, color='black', linewidth=0.5, linestyle=':')
+    ax.set_xlabel("Time  [s]")
+    ax.set_ylabel("Q  [N·m]")
+    ax.set_title("Generalised Cardan-Axis Reactions")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.35)
+
+    fig.tight_layout()
+    _save(fig, f"force_vs_time_{len_section:.3f}m.pdf")
+    return fig

@@ -30,6 +30,8 @@ from neri.joint            import make_all_joints
 from neri.assembly         import get_dof_indices
 from simulation.integrator import run_simulation
 
+CACHE_FILE = os.path.join(os.path.dirname(__file__), "results", "simulation_cache.npz")
+
 from merry_go_robotran.postprocess.plots import (
     plot_pole_omega,
     plot_pendulum_positions,
@@ -96,14 +98,42 @@ def main():
 
     # ── Step 2: Initial conditions ──────────────────────────────── #
     q0_full, qd0_full = _assemble_initial_conditions(bodies)
-    # ── Step 3: Integrate ODE ───────────────────────────────────── #
-    result = run_simulation(
-        bodies, joints,
-        q0_full, qd0_full,
-        t_end=10,  # t_end, # shorter time for faster debugging
-        rtol=RTOL,
-        atol=ATOL,
-    )
+
+    # ── Step 3: Integrate ODE (or load cached result) ───────────── #
+    if os.path.exists(CACHE_FILE):
+        print(f"[main] Loading cached simulation from {CACHE_FILE}")
+        data = np.load(CACHE_FILE)
+        result = {
+            't':      data['t'],
+            'q':      data['q'],
+            'qd':     data['qd'],
+            'qdd':    data['qdd'],
+            'Q':      data['Q'],
+            'idx_u':  list(data['idx_u']),
+            'idx_c':  list(data['idx_c']),
+            'bodies': bodies,
+            'joints': joints,
+            'ctx':    {'t0_motor': float(data['t0_motor'])},
+        }
+    else:
+        result = run_simulation(
+            bodies, joints,
+            q0_full, qd0_full,
+            t_end=10,  # t_end, # shorter time for faster debugging
+            rtol=RTOL,
+            atol=ATOL,
+        )
+        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+        np.savez(CACHE_FILE,
+                 t=result['t'],
+                 q=result['q'],
+                 qd=result['qd'],
+                 qdd=result['qdd'],
+                 Q=result['Q'],
+                 idx_u=np.array(result['idx_u']),
+                 idx_c=np.array(result['idx_c']),
+                 t0_motor=np.array(result['ctx']['t0_motor']))
+        print(f"[main] Simulation cached to {CACHE_FILE}")
     plot_pole_omega(result)
     plot_pendulum_positions(result)
     plot_all_nacelle_angles(result)  # or plot_nacelle_angles(result, nacelle_id=1) for a single one
