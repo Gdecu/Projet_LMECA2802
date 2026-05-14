@@ -441,6 +441,65 @@ def load_reference_data(filepath: str) -> dict:
     print(f"[reference] Loaded reference data ← {filepath}  ({data.shape[0]} steps)")
     return ref
 
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Plot D — Peak reaction force vs. split position along arm                  #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+def plot_force_vs_length(max_force_at: dict) -> plt.Figure:
+    """
+    Two-panel figure summarising the dimensioning sweep.
+
+    Top panel   — peak generalised-force magnitude |F| [N or N·m] at each
+                  split position, i.e. the envelope used for sizing.
+    Bottom panel — the three components (fx, fy, fz) at the instant when
+                  |F| was maximum, so the dominant loading axis is visible.
+
+    Parameters
+    ----------
+    max_force_at : dict with keys
+        'length'    : list[float]  split positions tested [m]
+        'max_force' : list[float]  peak |F| at each position
+        'fx','fy','fz' : list[float] components at peak instant
+        'time'      : list[float]  time at which the peak occurred [s]
+    """
+    length    = np.array(max_force_at['length'])
+    max_force = np.array(max_force_at['max_force'])
+    fx        = np.array(max_force_at['fx'])
+    fy        = np.array(max_force_at['fy'])
+    fz        = np.array(max_force_at['fz'])
+
+    # Index of the worst-case section
+    i_crit = int(np.argmax(max_force))
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    fig.suptitle("Dimensioning — Peak Reaction Force vs. Split Position",
+                 fontweight='bold')
+
+    # — Top: magnitude envelope ——————————————————————————————————————————
+    ax0 = axes[0]
+    ax0.plot(length, max_force, color='steelblue', linewidth=1.8, label='|F| peak')
+    ax0.axvline(length[i_crit], color='crimson', linewidth=1.0, linestyle='--',
+                label=f'Worst section  ({length[i_crit]:.3f} m)')
+    ax0.set_ylabel("Peak Force Magnitude  [N·m]")
+    ax0.legend()
+    ax0.grid(True, alpha=0.35)
+
+    # — Bottom: force components ————————————————————————————————————————
+    ax1 = axes[1]
+    ax1.plot(length, fx, color='crimson',    linewidth=1.4, label='F₁')
+    ax1.plot(length, fy, color='seagreen',   linewidth=1.4, label='F₂')
+    ax1.plot(length, fz, color='darkorange', linewidth=1.4, label='F₃')
+    ax1.axhline(0, color='black', linewidth=0.6, linestyle=':')
+    ax1.set_xlabel("Split Position along Arm  [m]")
+    ax1.set_ylabel("Force Components  [N·m]")
+    ax1.legend()
+    ax1.grid(True, alpha=0.35)
+
+    fig.tight_layout()
+    _save(fig, "force_vs_length.pdf")
+    return fig
+
+
 def plot_force(result):
     """
         Large 4×3 figure. If `ref` is provided, Robotran reference curves are

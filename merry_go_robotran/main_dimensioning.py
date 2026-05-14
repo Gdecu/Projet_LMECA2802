@@ -21,6 +21,7 @@ or:
 import numpy as np
 import sys
 import os
+import argparse
 
 from merry_go_robotran.data.carousel_data import L_pendulum
 
@@ -139,6 +140,7 @@ def main():
         max_force_at['fy'].append(Q_react_c[hap_at_i,1])
         max_force_at['fz'].append(Q_react_c[hap_at_i,2])
         print(f"[main] Simulation [{i+1}/{total}] complete. Results saved to results/\n")
+    save_dimensioning_data(max_force_at)
     plot_force_vs_length(max_force_at)
     print(f"\n[main] All simulations complete. Results saved to results/")
 
@@ -219,5 +221,43 @@ def compute_split_reactions(result, bodies, joints,
 
     return Q_react_c, F_cut, L_cut
 
+# ═══════════════════════════════════════════════════════════════════════════ #
+#  Data I/O — save / load dimensioning results                                #
+# ═══════════════════════════════════════════════════════════════════════════ #
+
+_DATA_DIR  = os.path.join(os.path.dirname(__file__), "results")
+_DATA_FILE = os.path.join(_DATA_DIR, "dimensioning_data.txt")
+
+# Column order inside the saved text file
+_COLS = ['length', 'max_force', 'fx', 'fy', 'fz', 'time']
+_HEADER = "length[m]  max_force[N]  fx[N]  fy[N]  fz[N]  time[s]"
+
+
+def save_dimensioning_data(max_force_at: dict, path: str = _DATA_FILE) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    data = np.column_stack([max_force_at[k] for k in _COLS])
+    np.savetxt(path, data, header=_HEADER, comments='# ')
+    print(f"[dimensioning] Data saved → {path}")
+
+
+def load_dimensioning_data(path: str = _DATA_FILE) -> dict:
+    data = np.loadtxt(path, comments='#')
+    max_force_at = {k: data[:, i].tolist() for i, k in enumerate(_COLS)}
+    print(f"[dimensioning] Data loaded ← {path}  ({data.shape[0]} points)")
+    return max_force_at
+
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Merry-go-round dimensioning sweep")
+    parser.add_argument(
+        "--load", metavar="FILE", nargs="?", const=_DATA_FILE,
+        help="Skip simulation and reload saved data for re-plotting "
+             f"(default path: {_DATA_FILE})"
+    )
+    args = parser.parse_args()
+
+    if args.load:
+        max_force_at = load_dimensioning_data(args.load)
+        plot_force_vs_length(max_force_at)
+    else:
+        main()
