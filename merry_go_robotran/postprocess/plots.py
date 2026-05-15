@@ -477,21 +477,21 @@ def plot_force_vs_length(max_force_at: dict) -> plt.Figure:
 
     # — Top: magnitude envelope ——————————————————————————————————————————
     ax0 = axes[0]
-    ax0.plot(length, max_force, color='steelblue', linewidth=1.8, label='|F| peak')
+    ax0.plot(length, max_force, color='steelblue', linewidth=1.8, label='|M| peak')
     ax0.axvline(length[i_crit], color='crimson', linewidth=1.0, linestyle='--',
-                label=f'Worst section  ({length[i_crit]:.3f} m)')
-    ax0.set_ylabel("Peak Force Magnitude  [N·m]")
+                label=f'Worst section  ({length[i_crit]:.1f} m)')
+    ax0.set_ylabel("Peak Moment Magnitude  [N·m]")
     ax0.legend()
     ax0.grid(True, alpha=0.35)
 
     # — Bottom: force components ————————————————————————————————————————
     ax1 = axes[1]
-    ax1.plot(length, fx, color='crimson',    linewidth=1.4, label='F₁')
-    ax1.plot(length, fy, color='seagreen',   linewidth=1.4, label='F₂')
-    ax1.plot(length, fz, color='darkorange', linewidth=1.4, label='F₃')
+    ax1.plot(length, fx, color='crimson',    linewidth=1.4, label='M₁')
+    ax1.plot(length, fy, color='seagreen',   linewidth=1.4, label='M₂')
+    ax1.plot(length, fz, color='darkorange', linewidth=1.4, label='M₃')
     ax1.axhline(0, color='black', linewidth=0.6, linestyle=':')
     ax1.set_xlabel("Split Position along Arm  [m]")
-    ax1.set_ylabel("Force Components  [N·m]")
+    ax1.set_ylabel("Moment Components  [N·m]")
     ax1.legend()
     ax1.grid(True, alpha=0.35)
 

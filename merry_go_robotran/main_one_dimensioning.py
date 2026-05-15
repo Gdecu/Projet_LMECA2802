@@ -36,7 +36,10 @@ from neri.joint            import make_all_joints
 from neri.assembly         import get_dof_indices
 from simulation.integrator import run_simulation
 
-from main_dimensioning import compute_split_reactions, _assemble_initial_conditions
+from main_dimensioning import (
+    compute_split_reactions, _assemble_initial_conditions,
+    save_dimensioning_data, load_dimensioning_data, _DATA_FILE,
+)
 
 from merry_go_robotran.postprocess.plots import plot_force_vs_time
 
@@ -45,7 +48,7 @@ from merry_go_robotran.postprocess.plots import plot_force_vs_time
 RTOL         = 1e-6
 ATOL         = 1e-9
 T_END        = 3.0
-DEFAULT_SECTION = L_pendulum / 2.0   # mid-arm by default
+DEFAULT_SECTION = 1e-6   # effectively 0 cm — safe epsilon for split geometry
 
 _RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
@@ -127,6 +130,39 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     t, Q_react_c, F_cut, L_cut = run_or_load(args.section, rerun=args.rerun)
+
+    # ── Compute peak force (same logic as main_dimensioning.py loop) ──────── #
+    max_force = 0
+    hap_at_i = 0
+    for ii in range(len(Q_react_c)):
+        norm_force = np.sqrt(Q_react_c[ii, 0]**2 + Q_react_c[ii, 1]**2 + Q_react_c[ii, 2]**2)
+        if norm_force > max_force:
+            max_force = norm_force
+            hap_at_i = ii
+
+    fx, fy, fz = Q_react_c[hap_at_i]
+    t_peak = t[hap_at_i]
+
+    print(f"\n[one_dim] Peak force at section {args.section:.6f} m:")
+    print(f"  max_force = {max_force:.4f} N")
+    print(f"  fx = {fx:.6f} N,  fy = {fy:.6f} N,  fz = {fz:.6f} N")
+    print(f"  at time   = {t_peak:.4f} s")
+
+    # ── Prepend row to dimensioning_data.txt ─────────────────────────────── #
+    new_row = {
+        'length':    [args.section],
+        'max_force': [max_force],
+        'fx':        [fx],
+        'fy':        [fy],
+        'fz':        [fz],
+        'time':      [t_peak],
+    }
+    if os.path.exists(_DATA_FILE):
+        existing = load_dimensioning_data(_DATA_FILE)
+        for key in new_row:
+            new_row[key] = new_row[key] + existing[key]
+    save_dimensioning_data(new_row)
+    print(f"[one_dim] Row prepended to {_DATA_FILE}")
 
     print(f"[one_dim] Plotting time-domain loads at {args.section:.4f} m...")
     plot_force_vs_time(t, Q_react_c, args.section)
